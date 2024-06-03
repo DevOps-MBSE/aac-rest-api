@@ -1,6 +1,6 @@
 # rest-api
 
-Rest-Api plugin for Architecture-as-Code
+Rest-API Plugin for Architecture-as-Code
 
 ## PYTHON VERSION COMPATIBILITY
 

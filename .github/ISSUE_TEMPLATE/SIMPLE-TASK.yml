@@ -1,6 +1,6 @@
-name: "📋 Rest-Api Task"
-description: Create a new ticket for a task to go with a Rest-Api feature
-title: "📋 [Rest-Api TASK] - <title>"
+name: "📋 Rest-API Task"
+description: Create a new ticket for a task to go with a Rest-API feature
+title: "📋 [Rest-API TASK] - <title>"
 labels: [
   "enhancement"
 ]

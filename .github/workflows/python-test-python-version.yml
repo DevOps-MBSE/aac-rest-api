@@ -23,7 +23,7 @@ jobs:
         with:
           python-version: ${{ matrix.py_version }}
 
-      - name: Install the AaC Rest-Api Package
+      - name: Install the AaC Rest-API Package
         run: pip install -e .
 
       - name: Install requirements
@@ -48,10 +48,3 @@ jobs:
       #   with:
       #     name: test-coverage-report
       #     path: python/html_code_coverage/
-
-      - name: Upload logs from failed runs
-        if: ${{ failure() }}
-        uses: actions/upload-artifact@v3
-        with:
-          name: failed_test_log
-          path: python/src/aac/aac.log

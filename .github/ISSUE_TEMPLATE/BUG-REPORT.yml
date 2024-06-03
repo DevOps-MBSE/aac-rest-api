@@ -1,6 +1,6 @@
-name: "🐛 Rest-Api Bug Report"
-description: Create a new ticket for a bug in the Rest-Api repository.
-title: "🐛 [Rest-Api BUG] - <title>"
+name: "🐛 Rest-API Bug Report"
+description: Create a new ticket for a bug in the Rest-API repository.
+title: "🐛 [Rest-API BUG] - <title>"
 labels: [
   "bug"
 ]

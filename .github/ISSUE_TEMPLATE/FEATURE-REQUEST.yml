@@ -1,6 +1,6 @@
-name: "💭 Rest-Api Feature Request"
-description: Create a new ticket for a new feature request in the Rest-Api repository.
-title: "💭 [Rest-Api REQUEST] - <title>"
+name: "💭 Rest-API Feature Request"
+description: Create a new ticket for a new feature request in the Rest-API repository.
+title: "💭 [Rest-API REQUEST] - <title>"
 labels: [
   "question", 
   "enhancement"

@@ -1,6 +1,6 @@
-name: "✏️📘 Rest-Api Documentation Request"
-description: Create a new ticket for a documentation request in the Rest-Api repository.
-title: "✏️📘 [Rest-Api Documentation] - <title>"
+name: "✏️📘 Rest-API Documentation Request"
+description: Create a new ticket for a documentation request in the Rest-API repository.
+title: "✏️📘 [Rest-API Documentation] - <title>"
 labels: [
   "documentation"
 ]

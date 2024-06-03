@@ -20,9 +20,9 @@ sys.path.insert(0, os.path.abspath("."))
 
 # -- Project information -----------------------------------------------------
 
-project = "Architecture-as-Code Plant-UML Plugin"
-copyright = f"2021 - {str(date.today().year)} , AaC Rest-Api Project Contributors"
-author = "AaC Rest-Api Project Contributors"
+project = "Architecture-as-Code Rest-API Plugin"
+copyright = f"2021 - {str(date.today().year)} , AaC Rest-API Project Contributors"
+author = "AaC Rest-API Project Contributors"
 
 # The full version, including alpha/beta/rc tags
 release = metadata.version("aac-rest-api")
