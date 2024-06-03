@@ -2,4 +2,4 @@ graft src
 graft tests
 
 include tox.ini
-include src/specifications/specifications.aac
+include src/rest-api/rest-api.aac

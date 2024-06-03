@@ -1,6 +1,6 @@
-# aac-spec
+# rest-api
 
-Specification and requirement tracing plugins for Architecture-as-Code
+Rest-Api plugin for Architecture-as-Code
 
 ## PYTHON VERSION COMPATIBILITY
 
@@ -24,7 +24,7 @@ A MANIFEST file with these lines was added:
    graft src
    graft tests
    include tox.ini
-   include src/puml/.aac
+   include src/rest-api/.aac
 
 ## TO BUILD FROM TERMINAL
 

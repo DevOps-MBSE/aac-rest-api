@@ -3,7 +3,7 @@ tasks:
     init: |
       cd /workspace/aac-spec/docs/
       sleep 120 # Gitpod often takes a long time to install the python environment
-      source /workspace/aac-spec/python/venv/bin/activate
+      source /workspace/rest-api/python/venv/bin/activate
       sphinx-build source gen_docs # Pre-build the docs so that when Gitpod opens the port it's ready to serve
     command: sphinx-autobuild source gen_docs
 
@@ -14,7 +14,7 @@ tasks:
       source venv/bin/activate
       python -m pip install --upgrade pip
       pip install -e .[all]
-    command: cd /workspace/aac-spec/python/; source venv/bin/activate # Always launch a console with our virtual env
+    command: cd /workspace/rest-api/python/; source venv/bin/activate # Always launch a console with our virtual env
 
 vscode:
   extensions:
