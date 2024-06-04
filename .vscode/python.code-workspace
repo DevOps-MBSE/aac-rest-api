@@ -1,0 +1,53 @@
+{
+    "folders": [
+        {
+            "path": "../python"
+        }
+    ],
+    "settings": {
+        "python.linting.pylintEnabled": false,
+        "python.linting.flake8Enabled": true,
+        "python.linting.enabled": true,
+        "python.formatting.provider": "black",
+        "python.testing.unittestArgs": [
+            "-v",
+            "-s",
+            "./tests",
+            "-p",
+            "test_*.py"
+        ],
+        "python.testing.pytestEnabled": false,
+        "python.testing.unittestEnabled": true,
+        "python.formatting.blackArgs": [
+            "--line-length=127"
+        ],
+        "cSpell.enabled": true,
+        "cSpell.words": [
+            "attribs",
+            "fastapi",
+            "jsonable",
+            "pluggy",
+            "protobuf",
+            "puml",
+            "pydantic",
+            "pygls",
+            "pythonic",
+            "usecase",
+            "uvicorn"
+        ],
+        "python.languageServer": "Pylance",
+        "python.linting.mypyEnabled": true
+    },
+    "launch": {
+        "configurations": [{
+            "name": "Unit Tests",
+            "type": "python",
+            "request": "launch",
+            "program": "nose2",
+            "args": ["-c", "${workspaceFolder}/tox.ini"],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },],
+        "compounds": []
+    }
+}
