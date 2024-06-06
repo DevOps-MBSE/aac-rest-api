@@ -1,6 +1,6 @@
 plugin:
   name: REST API
-  package: rest-api
+  package: rest_api
   description: |
     An AaC plugin that provides a RESTful API for managing and interacting with
     the AaC Python package.
