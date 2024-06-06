@@ -6,7 +6,7 @@ plugin:
     the AaC Python package.
   commands:
     - name: rest-api
-      helpText: Start a RESTful interface for interacting with and managing AaC.
+      help_text: Start a RESTful interface for interacting with and managing AaC.
       run_before:
         - plugin: Check AaC
           command: check
@@ -17,12 +17,11 @@ plugin:
         - name: --host
           type: string
           description: Set the hostname of the service. Useful for operating behind proxies.
-          defualt: 0.0.0.0
+          default: "0.0.0.0"
         - name: --port
           type: int
-          python_type: int
           description: The port to which the RESTful service will be bound.
-          default: 8080
+          default: "8080"
       acceptance:
         - name: Start the RESTful API.
           scenarios:
@@ -41,7 +40,7 @@ plugin:
                 - The RESTful API is accessible on the port specified by the port argument.
                 - The RESTful API returns links to itself with the hostname specified by the host argument.
     - name: gen-openapi-spec
-      helpText: Write the OpenAPI schema to a JSON file.
+      help_text: Write the OpenAPI schema to a JSON file.
       input:
         - name: output_directory
           type: directory
