@@ -7,12 +7,6 @@ plugin:
   commands:
     - name: rest-api
       help_text: Start a RESTful interface for interacting with and managing AaC.
-      run_before:
-        - plugin: Check AaC
-          command: check
-      run_after:
-        - plugin: Generate
-          command: generate
       input:
         - name: --host
           type: string
@@ -27,7 +21,7 @@ plugin:
           scenarios:
             - name: Start the RESTful API without arguments.
               when:
-                - The aac app is run with the rest-api command.
+                - The AaC app is run with the rest-api command.
               then:
                 - The RESTful API is accessible on the default port value.
             - name: Start the RESTful API with arguments.
@@ -35,7 +29,7 @@ plugin:
                 - The {{rest-api.input.--host}} contains a valid hostname.
                 - The {{rest-api.input.--port}} contains a valid, open port.
               when:
-                - The aac app is run with the rest-api command.
+                - The AaC app is run with the rest-api command.
               then:
                 - The RESTful API is accessible on the port specified by the port argument.
                 - The RESTful API returns links to itself with the hostname specified by the host argument.
@@ -49,7 +43,9 @@ plugin:
         - name: Output OpenAPI to file.
           scenarios:
             - name: Output the OpenAPI specification to file.
+              given:
+                - The {{gen-openapi-spec.input.output_directory}} contains a valid directory.
               when:
-                - The aac app is run with the generate-openapi-spec command.
+                - The AaC app is run with the generate-openapi-spec command.
               then:
                 - The OpenAPI schema is written to the output directory in a JSON file.
