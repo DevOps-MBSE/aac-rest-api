@@ -18,9 +18,6 @@ jobs:
         with:
           python-version: 3.9.13
 
-      - name: Install requirements
-        run: pip install -r requirements.txt
-
       - name: Install the aac-rest-api Package
         run: pip install -e .
 
