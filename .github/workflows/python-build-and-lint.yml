@@ -19,7 +19,7 @@ jobs:
           python-version: 3.9.13
 
       - name: Install the aac-rest-api Package
-        run: pip install -e .
+        run: pip install -e .[all]
 
       - name: Lint with flake8
         run: flake8 .
@@ -35,8 +35,6 @@ jobs:
         with:
           name: aac_rest_api
           path: python/dist
-          if-no-files-found: error
-          overwrite: true
 
       - name: Build Documentation
         run: |
@@ -49,4 +47,3 @@ jobs:
         with:
           name: aac-rest-api-docs
           path: python/docs/doc_artifacts
-          overwrite: true

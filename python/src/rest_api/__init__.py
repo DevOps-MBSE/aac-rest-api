@@ -23,9 +23,9 @@ rest_api_aac_file_name = "rest_api.aac"
 
 def run_rest_api(host: str, port: int) -> ExecutionResult:
     """
-     Start a RESTful interface for interacting with and managing AaC.
+    Start a RESTful interface for interacting with and managing AaC.
 
-     Args:
+    Args:
         host (str): Set the hostname of the service. Useful for operating behind proxies.
         port (int): The port to which the RESTful service will be bound.
 
@@ -46,8 +46,9 @@ def run_rest_api(host: str, port: int) -> ExecutionResult:
 
 def run_gen_openapi_spec(output_directory: str) -> ExecutionResult:
     """
-     Write the OpenAPI schema to a JSON file.
-     Args:
+    Write the OpenAPI schema to a JSON file.
+
+    Args:
          output_directory (str): The output directory in which to write the AaC OpenAPI JSON file.
 
     Returns:

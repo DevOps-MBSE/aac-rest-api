@@ -48,9 +48,9 @@ def rest_api(host: str, port: int) -> ExecutionResult:
 
 def gen_openapi_spec(output_directory: str) -> ExecutionResult:
     """
-     Business logic for allowing gen-openapi-spec command to perform Write the OpenAPI schema to a JSON file.
-     
-     Args:
+    Business logic for allowing gen-openapi-spec command to perform Write the OpenAPI schema to a JSON file.
+
+    Args:
          output_directory (str): The output directory in which to write the AaC OpenAPI JSON file.
 
     Returns:
