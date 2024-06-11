@@ -58,7 +58,7 @@ all = [
 ]
 
 [project.entry-points."aac"]
-rest-api = "rest-api"
+rest-api = "rest_api"
 [project.urls]
 Homepage = "https://github.com/DevOps-MBSE/rest-api"
 Issues = "https://github.com/DevOps-MBSE/rest-api/issues"
