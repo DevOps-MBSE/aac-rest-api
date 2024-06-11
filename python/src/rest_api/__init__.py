@@ -24,8 +24,10 @@ rest_api_aac_file_name = "rest_api.aac"
 def run_rest_api(host: str, port: int) -> ExecutionResult:
     """
      Start a RESTful interface for interacting with and managing AaC.
+
      Args:
-         host (str): Set the hostname of the service. Useful for operating behind proxies.port (int): The port to which the RESTful service will be bound.
+        host (str): Set the hostname of the service. Useful for operating behind proxies.
+        port (int): The port to which the RESTful service will be bound.
 
     Returns:
          The results of the execution of the plugin rest-api command.

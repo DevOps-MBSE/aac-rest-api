@@ -22,9 +22,11 @@ plugin_name = "REST API"
 
 def rest_api(host: str, port: int) -> ExecutionResult:
     """
-     Business logic for allowing rest-api command to perform Start a RESTful interface for interacting with and managing AaC.
-     Args:
-         host (str): Set the hostname of the service. Useful for operating behind proxies.port (int): The port to which the RESTful service will be bound.
+    Business logic for allowing rest-api command to perform Start a RESTful interface for interacting with and managing AaC.
+
+    Args:
+         host (str): Set the hostname of the service. Useful for operating behind proxies.
+         port (int): The port to which the RESTful service will be bound.
 
     Returns:
          The results of the execution of the rest-api command.
@@ -47,6 +49,7 @@ def rest_api(host: str, port: int) -> ExecutionResult:
 def gen_openapi_spec(output_directory: str) -> ExecutionResult:
     """
      Business logic for allowing gen-openapi-spec command to perform Write the OpenAPI schema to a JSON file.
+     
      Args:
          output_directory (str): The output directory in which to write the AaC OpenAPI JSON file.
 

@@ -5,11 +5,7 @@
 Feature: Output OpenAPI to file.
 
   Scenario: Output the OpenAPI specification to file.
-  
+
       Given The {{gen-openapi-spec.input.output_directory}} contains a valid directory.
       When The AaC app is run with the generate-openapi-spec command.
       Then The AaC app is run with the generate-openapi-spec command.
-      
-    
-  
-  

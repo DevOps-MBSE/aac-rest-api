@@ -5,19 +5,13 @@
 Feature: Start the RESTful API.
 
   Scenario: Start the RESTful API without arguments.
-  
+
       When The AaC app is run with the rest-api command.
       Then The AaC app is run with the rest-api command.
-      
-    
-  
+
   Scenario: Start the RESTful API with arguments.
-  
+
       Given The {{rest-api.input.--host}} contains a valid hostname.
       And The {{rest-api.input.--port}} contains a valid, open port.
       When The AaC app is run with the rest-api command.
       Then The AaC app is run with the rest-api command.
-      
-    
-  
-  
