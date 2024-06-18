@@ -330,7 +330,12 @@ def _get_available_files_in_workspace(active_context: LanguageContext) -> set[Aa
 
 
 async def refresh_available_files_in_workspace(active_context: LanguageContext) -> None:
-    """Used to refresh the available files. Used in async since it takes too long for being used in request-response flow."""
+    """
+    Used to refresh the available files. Used in async since it takes too long for being used in request-response flow.
+
+    Args:
+        active_context (LanguageContext): The active Language Context.
+    """
     global AVAILABLE_AAC_FILES
     AVAILABLE_AAC_FILES = list(_get_available_files_in_workspace(active_context))
 
