@@ -112,7 +112,8 @@ def get_file_by_uri(active_context: LanguageContext, uri: str):
         uri (str): The string uri to search for.
 
     Returns:
-        Target file from the workspace, or HTTPStatus.NOT_FOUND if the file isn't in the context"""
+        Target file from the workspace, or HTTPStatus.NOT_FOUND if the file isn't in the context
+    """
     file_in_context = _get_file_in_context_by_uri(active_context, uri)
 
     if file_in_context:
@@ -157,7 +158,7 @@ def import_files_to_context(active_context: LanguageContext, file_models: list[F
 def rename_file_uri(active_context: LanguageContext, rename_request: FilePathRenameModel) -> None:
     """
     Update a file's uri. (Rename file).
-    
+
     Args:
         active_context (LanguageContext):  The active language context.
         rename_request (FilePathRenameModel): A RestAPI model for renaming a file.
@@ -184,10 +185,16 @@ def rename_file_uri(active_context: LanguageContext, rename_request: FilePathRen
 
 
 @app.delete("/file", status_code=HTTPStatus.NO_CONTENT)
-def remove_file_by_uri(active_context: LanguageContext, uri: str):
-    """Remove the requested file and it's associated definitions from the active context."""
+def remove_file_by_uri(active_context: LanguageContext, uri: str) -> None:
+    """
+    Remove the requested file and it's associated definitions from the active context.
 
-    file_in_context = active_context.get_file_in_context_by_uri(uri)
+    Args:
+        active_context (LanguageContext): The active language context.
+        uri (str): uri (str): The string uri of the files to be removed.
+    """
+
+    file_in_context = _get_file_in_context_by_uri(active_context, uri)
     if not file_in_context:
         _report_error_response(HTTPStatus.NOT_FOUND, f"File {uri} not found in the context.")
 
@@ -201,47 +208,56 @@ def remove_file_by_uri(active_context: LanguageContext, uri: str):
             f"No definition(s) from {uri} were found in the context; Will not remove any definitions or files from the context.",
         )
 
-    active_context.remove_definitions_from_context(definitions_to_remove)
+    active_context.remove_definitions(definitions_to_remove)
 
 
 # Definition CRUD Operations
 
 
 @app.get("/definitions", status_code=HTTPStatus.OK, response_model=list[DefinitionModel])
-def get_definitions():
-    """Return a list of the definitions in the active context."""
-    definition_models = [to_definition_model(definition) for definition in get_active_context().definitions]
+def get_definitions(active_context: LanguageContext) -> list[DefinitionModel]:
+    """
+    Return a list of the definitions in the active context.
+
+    Args:
+        active_context (LanguageContext): The active language context.
+
+    Returns:
+        A list of definitions represented as DefinitionModel objects.
+    """
+    definition_models = [to_definition_model(definition) for definition in active_context.get_definitions()]
     return definition_models
 
 
 @app.get("/definition", status_code=HTTPStatus.OK, response_model=DefinitionModel)
-def get_definition_by_name(name: str, include_json_schema: bool = False):
+def get_definition_by_name(active_context: LanguageContext, name: str) -> list[DefinitionModel]:
     """
     Returns a definition from active context by name, or HTTPStatus.NOT_FOUND not found if the definition doesn't exist.
 
-    Returns:
-        200 HTTPStatus.OK if successful.
-    """
-    active_context = get_active_context()
-    definition = active_context.get_definition_by_name(name)
+    Args:
+        active_context (LanguageContext): The active language context.
+        name (str): Name of the definition to be returned
 
-    if not definition:
+    Returns:
+        Returns the definitions with the given name as a list containing DefinitionModel objects.
+    """
+    definitions = active_context.get_definitions_by_name(name)
+
+    if not definitions:
         _report_error_response(HTTPStatus.NOT_FOUND, f"Definition {name} not found in the context.")
     else:
-        definition_model = to_definition_model(definition)
-
-        if include_json_schema:
-            definition_model.json_schema = get_definition_json_schema(definition, active_context)
+        definition_models = [to_definition_model(definition) for definition in definitions]
 
         return definition_model
 
 
 @app.post("/definition", status_code=HTTPStatus.NO_CONTENT)
-def add_definition(definition_model: DefinitionModel):
+def add_definition(active_context: LanguageContext, definition_model: DefinitionModel) -> None:
     """
     Add the definition to the active context. If the definition's source file doesn't exist, a new one will be created.
 
     Args:
+        active_context (LanguageContext): The active language context.
         definition_model (DefinitionModel): The definition model in request body.
 
     Returns:
@@ -256,8 +272,7 @@ def add_definition(definition_model: DefinitionModel):
         )
 
     definition_to_add = to_definition_class(definition_model)
-    active_context = get_active_context()
-    existing_definitions = active_context.get_definitions_by_file_uri(definition_source_uri)
+    existing_definitions = _get_definitions_by_file_uri(active_context, definition_source_uri)
 
     is_user_editable = True
     if len(existing_definitions) > 0:
@@ -269,25 +284,30 @@ def add_definition(definition_model: DefinitionModel):
             f"File {definition_source_uri} can't be edited by users.",
         )
 
-    active_context.add_definition_to_context(definition_to_add)
-    active_context.update_architecture_file(definition_to_add.source.uri)
+    parser = DefinitionParser()
+    parser.load_definitions(active_context, definition_to_add)
 
 
 @app.put("/definition", status_code=HTTPStatus.NO_CONTENT)
-def update_definition(definition_model: DefinitionModel) -> None:
-    """Update the request body definitions in the active context."""
-    active_context = get_active_context()
+def update_definition(active_context: LanguageContext, definition_model: DefinitionModel) -> None:
+    """
+    Update the request body definitions in the active context.
 
-    definition_to_update = active_context.get_definitions_by_name(definition_model.name)
+    Args:
+        active_context (LanguageContext): The active language context.
+        definition_model (DefinitionModel): The definition to be updated.
+    """
 
-    if definition_to_update:
+    definitions_to_update = active_context.get_definitions_by_name(definition_model.name)
+
+    if definitions_to_update:
         updated_definition = to_definition_class(definition_model)
-        updated_definition.uid = definition_to_update.uid
-        active_context.update_definition_in_context(updated_definition)
-        active_context.update_architecture_file(definition_to_update.source.uri)
-
-        if definition_model.source_uri != definition_to_update.source.uri:
-            active_context.update_architecture_file(definition_model.source_uri)
+        for definition in definitions_to_update:
+            if definition.name == updated_definition.name:
+                updated_definition.uid = definition.uid
+        active_context.remove_definitions(definitions_to_update)
+        parser = DefinitionParser()
+        parser.load_definitions(active_context, [updated_definition])
 
     else:
         _report_error_response(
@@ -297,8 +317,10 @@ def update_definition(definition_model: DefinitionModel) -> None:
 
 
 @app.delete("/definition", status_code=HTTPStatus.NO_CONTENT)
-def remove_definition_by_name(name: str):
-    """Remove the definition via name from the active context."""
+def remove_definition_by_name(active_context: LanguageContext, name: str):
+    """
+    Remove the definition via name from the active context.
+    """
     active_context = get_active_context()
 
     definition_to_remove = active_context.get_definition_by_name(name)
