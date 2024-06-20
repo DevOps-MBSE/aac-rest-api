@@ -47,7 +47,7 @@ def rest_api(host: str, port: int) -> ExecutionResult:
 
     msg_str = _start_restful_service(host, port)
 
-    status = ExecutionStatus.GENERAL_SUCCESS
+    status = ExecutionStatus.SUCCESS
     messages: list[ExecutionMessage] = []
     msg = ExecutionMessage(
         msg_str,
@@ -70,7 +70,7 @@ def _start_restful_service(host: str, port: int) -> str:
     Returns:
         A success message.
     """
-    asyncio.run(refresh_available_files_in_workspace())
+    asyncio.run(refresh_available_files_in_workspace(LanguageContext()))
     logging.info(f"Starting REST API in {os.getcwd()}.")
     uvicorn.run(app, host=host, port=port)
     return "Successfully started and stopped the RESTful API."
@@ -91,7 +91,7 @@ def gen_openapi_spec(output_directory: str) -> ExecutionResult:
 
     msg_str = _write_openapi_spec_to_file(output_directory)
 
-    status = ExecutionStatus.GENERAL_SUCCESS
+    status = ExecutionStatus.SUCCESS
     messages: list[ExecutionMessage] = []
     msg = ExecutionMessage(
         msg_str,

@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, BackgroundTasks, responses, exceptions, Request
 from http import HTTPStatus
 import logging
+from typing import Optional
 import os
 
 from aac.context.definition_parser import DefinitionParser
@@ -8,11 +9,13 @@ from aac.context.language_context import LanguageContext
 from aac.context.language_error import LanguageError
 from aac.context.definition import Definition
 from aac.execute.plugin_runner import AacCommand
+from aac.execute.plugin_manager import get_plugin_manager
 from aac.in_out.files.aac_file import AaCFile
 from aac.in_out.files.find import find_aac_files, is_aac_file
 from aac.in_out.paths import sanitize_filesystem_path
 from aac.in_out.parser import parse, ParserError
-from aac.plugins.plugin_execution import PluginExecutionStatusCode
+from aac.execute.aac_execution_result import ExecutionStatus
+
 from rest_api.models.command_model import (
     CommandModel,
     CommandRequestModel,
@@ -29,7 +32,7 @@ WORKSPACE_DIR: str = os.getcwd()
 
 # File CRUD Operations
 
-def _get_files_in_context(active_context: LanguageContext) -> list[AaCFile]:
+def _get_files_in_context() -> list[AaCFile]:
     """
     Returns a list of all files contributing definitions to the active context.
 
@@ -41,7 +44,7 @@ def _get_files_in_context(active_context: LanguageContext) -> list[AaCFile]:
     """
     return list({definition.source for definition in active_context.definitions})
 
-def _get_file_in_context_by_uri(active_context: LanguageContext, uri: str) -> Optional[AaCFile]:
+def _get_file_in_context_by_uri(uri: str) -> Optional[AaCFile]:
     """
     Return the AaCFile object by uri from the context or None if the file isn't in the context.
 
@@ -56,7 +59,7 @@ def _get_file_in_context_by_uri(active_context: LanguageContext, uri: str) -> Op
         if definition.source.uri == uri:
             return definition.source
 
-def _get_definitions_by_file_uri(active_context: LanguageContext, file_uri: str) -> list[Definition]:
+def _get_definitions_by_file_uri(file_uri: str) -> list[Definition]:
     """
     Return a subset of definitions that are sourced from the target file URI.
 
@@ -71,7 +74,7 @@ def _get_definitions_by_file_uri(active_context: LanguageContext, file_uri: str)
 
 
 @app.get("/files/context", status_code=HTTPStatus.OK, response_model=list[FileModel])
-def get_files_from_context(active_context: LanguageContext):
+def get_files_from_context():
     """
     Return a list of file model definitions of files contributing definitions.
 
@@ -81,7 +84,7 @@ def get_files_from_context(active_context: LanguageContext):
     Returns:
         A list of FileModel objects representing files in the active context.
     """
-    return [to_file_model(file) for file in _get_files_in_context(active_context)]
+    return [to_file_model(file) for file in _get_files_in_context()]
 
 
 @app.get("/files/available", status_code=HTTPStatus.OK, response_model=list[FileModel])
@@ -103,7 +106,7 @@ def get_available_files(background_tasks: BackgroundTasks):
 
 
 @app.get("/file", status_code=HTTPStatus.OK, response_model=FileModel)
-def get_file_by_uri(active_context: LanguageContext, uri: str):
+def get_file_by_uri(uri: str):
     """
     Return the target file from the workspace
 
@@ -114,7 +117,7 @@ def get_file_by_uri(active_context: LanguageContext, uri: str):
     Returns:
         Target file from the workspace, or HTTPStatus.NOT_FOUND if the file isn't in the context
     """
-    file_in_context = _get_file_in_context_by_uri(active_context, uri)
+    file_in_context = _get_file_in_context_by_uri(uri)
 
     if file_in_context:
         file_model = to_file_model(file_in_context)
@@ -127,7 +130,7 @@ def get_file_by_uri(active_context: LanguageContext, uri: str):
 
 
 @app.post("/files/import", status_code=HTTPStatus.NO_CONTENT)
-def import_files_to_context(active_context: LanguageContext, file_models: list[FilePathModel]) -> None:
+def import_files_to_context(file_models: list[FilePathModel]) -> None:
     """
     Import the list of files into the context.
 
@@ -155,7 +158,7 @@ def import_files_to_context(active_context: LanguageContext, file_models: list[F
 
 
 @app.put("/file", status_code=HTTPStatus.NO_CONTENT)
-def rename_file_uri(active_context: LanguageContext, rename_request: FilePathRenameModel) -> None:
+def rename_file_uri(rename_request: FilePathRenameModel) -> None:
     """
     Update a file's uri. (Rename file).
 
@@ -166,7 +169,7 @@ def rename_file_uri(active_context: LanguageContext, rename_request: FilePathRen
     current_file_path = sanitize_filesystem_path(str(rename_request.current_file_uri))
     new_file_path = sanitize_filesystem_path(rename_request.new_file_uri)
 
-    file_in_context = _get_file_in_context_by_uri(active_context, current_file_path)
+    file_in_context = _get_file_in_context_by_uri(current_file_path)
 
     if not _is_file_path_in_working_directory(new_file_path):
         _report_error_response(
@@ -176,7 +179,7 @@ def rename_file_uri(active_context: LanguageContext, rename_request: FilePathRen
 
     if file_in_context:
         os.rename(current_file_path, new_file_path)
-        definitions_to_update = _get_definitions_by_file_uri(active_context, current_file_path)
+        definitions_to_update = _get_definitions_by_file_uri(current_file_path)
         for definition in definitions_to_update:
             definition.source.uri = new_file_path
 
@@ -185,7 +188,7 @@ def rename_file_uri(active_context: LanguageContext, rename_request: FilePathRen
 
 
 @app.delete("/file", status_code=HTTPStatus.NO_CONTENT)
-def remove_file_by_uri(active_context: LanguageContext, uri: str) -> None:
+def remove_file_by_uri(uri: str) -> None:
     """
     Remove the requested file and it's associated definitions from the active context.
 
@@ -194,12 +197,12 @@ def remove_file_by_uri(active_context: LanguageContext, uri: str) -> None:
         uri (str): uri (str): The string uri of the files to be removed.
     """
 
-    file_in_context = _get_file_in_context_by_uri(active_context, uri)
+    file_in_context = _get_file_in_context_by_uri(uri)
     if not file_in_context:
         _report_error_response(HTTPStatus.NOT_FOUND, f"File {uri} not found in the context.")
 
     definitions_to_remove = []
-    discovered_definitions = _get_definitions_by_file_uri(active_context, uri)
+    discovered_definitions = _get_definitions_by_file_uri(uri)
     definitions_to_remove.extend(discovered_definitions)
 
     if len(discovered_definitions) == 0:
@@ -215,7 +218,7 @@ def remove_file_by_uri(active_context: LanguageContext, uri: str) -> None:
 
 
 @app.get("/definitions", status_code=HTTPStatus.OK, response_model=list[DefinitionModel])
-def get_definitions(active_context: LanguageContext) -> list[DefinitionModel]:
+def get_definitions() -> list[DefinitionModel]:
     """
     Return a list of the definitions in the active context.
 
@@ -230,7 +233,7 @@ def get_definitions(active_context: LanguageContext) -> list[DefinitionModel]:
 
 
 @app.get("/definition", status_code=HTTPStatus.OK, response_model=DefinitionModel)
-def get_definition_by_name(active_context: LanguageContext, name: str) -> list[DefinitionModel]:
+def get_definition_by_name(name: str) -> list[DefinitionModel]:
     """
     Returns a definition from active context by name, or HTTPStatus.NOT_FOUND not found if the definition doesn't exist.
 
@@ -252,7 +255,7 @@ def get_definition_by_name(active_context: LanguageContext, name: str) -> list[D
 
 
 @app.post("/definition", status_code=HTTPStatus.NO_CONTENT)
-def add_definition(active_context: LanguageContext, definition_model: DefinitionModel) -> None:
+def add_definition(definition_model: DefinitionModel) -> None:
     """
     Add the definition to the active context. If the definition's source file doesn't exist, a new one will be created.
 
@@ -272,7 +275,7 @@ def add_definition(active_context: LanguageContext, definition_model: Definition
         )
 
     definition_to_add = to_definition_class(definition_model)
-    existing_definitions = _get_definitions_by_file_uri(active_context, definition_source_uri)
+    existing_definitions = _get_definitions_by_file_uri(definition_source_uri)
 
     is_user_editable = True
     if len(existing_definitions) > 0:
@@ -289,7 +292,7 @@ def add_definition(active_context: LanguageContext, definition_model: Definition
 
 
 @app.put("/definition", status_code=HTTPStatus.NO_CONTENT)
-def update_definition(active_context: LanguageContext, definition_model: DefinitionModel) -> None:
+def update_definition(definition_model: DefinitionModel) -> None:
     """
     Update the request body definitions in the active context.
 
@@ -307,7 +310,7 @@ def update_definition(active_context: LanguageContext, definition_model: Definit
                 updated_definition.uid = definition.uid
         active_context.remove_definitions(definitions_to_update)
         parser = DefinitionParser()
-        parser.load_definitions(active_context, [updated_definition])
+        parser.load_definitions([updated_definition])
 
     else:
         _report_error_response(
@@ -317,17 +320,19 @@ def update_definition(active_context: LanguageContext, definition_model: Definit
 
 
 @app.delete("/definition", status_code=HTTPStatus.NO_CONTENT)
-def remove_definition_by_name(active_context: LanguageContext, name: str):
+def remove_definition_by_name(name: str) -> None:
     """
     Remove the definition via name from the active context.
+
+    Args:
+        active_context (LanguageContext): The active language context.
+        name (str): Name of the definition to be removed.
     """
-    active_context = get_active_context()
 
-    definition_to_remove = active_context.get_definition_by_name(name)
+    definitions_to_remove = active_context.get_definitions_by_name(name)
 
-    if definition_to_remove:
-        active_context.remove_definition_from_context(definition_to_remove)
-        active_context.update_architecture_file(definition_to_remove.source.uri)
+    if definitions_to_remove:
+        active_context.remove_definitions(definition_to_remove)
     else:
         _report_error_response(
             HTTPStatus.NOT_FOUND,
@@ -338,16 +343,21 @@ def remove_definition_by_name(active_context: LanguageContext, name: str):
 # Language Context Support
 
 @app.get("/context/schema", status_code=HTTPStatus.OK, response_model=DefinitionModel)
-def get_root_key_schema(key: str):
+def get_root_key_schema(key: str) -> DefinitionModel:
     """
-    Returns the JSON schema for the given root key, or HTTPStatus.NOT_FOUND not found if the key doesn't exist.
+    Returns the YAML schema for the given root key, or HTTPStatus.NOT_FOUND not found if the key doesn't exist.
+
+    Args:
+        active_context (LanguageContext): The active language context.
+        key (str): The key of the root schema to be returned.
 
     Returns:
+        Schema_Model containing the root schema with the given key.
         200 HTTPStatus.OK if successful.
         404 HTTPStatus.NOT_FOUND if the key doesn't exist.
     """
-    active_context = get_active_context()
-    root_definitions = active_context.get_root_definitions()
+    # root_definitions = active_context.get_root_definitions()
+    root_definitions = [definition for definition in active_context.definitions if definition.get_root()]
     matching_definitions = [definition for definition in root_definitions if definition.name == key]
 
     if not matching_definitions:
@@ -359,34 +369,55 @@ def get_root_key_schema(key: str):
             _report_error_response(HTTPStatus.NOT_FOUND, f"Unable to get the schema definition {schema_definition.name}.")
         else:
             schema_model = to_definition_model(schema_definition)
-            schema_model.json_schema = get_definition_json_schema(schema_definition, active_context)
+            schema_model.yaml_schema = schema_definition.to_yaml
             return schema_model
 
 
 @app.get("/context/root_keys", status_code=HTTPStatus.OK, response_model=list[str])
-def get_language_context_root_keys():
+def get_language_context_root_keys() -> list[str]:
     """
     Returns a list of root keys from the active context.
 
+    Args:
+        active_context (LanguageContext): The active language context.
+
     Returns:
+        A list containing all root keys in the active context.
         200 HTTPStatus.OK
     """
-    return get_active_context().get_root_keys()
+    return [str(definition.get_root()) for definition in active_context.definitions if definition.get_root()]
 
 
 # AaC Plugin Commands
 
 
 @app.get("/commands", status_code=HTTPStatus.OK, response_model=list[CommandModel])
-def get_aac_commands():
-    """Return a list of all available plugin commands."""
+def get_aac_commands() -> list[CommandModel]:
+    """
+    Return a list of all available plugin commands.
+
+    Args:
+        active_context (LanguageContext): The active language context.
+
+    Returns:
+        A list of CommandModel objects
+    """
     aac_and_plugin_commands = _get_rest_api_compatible_commands()
     return [to_command_model(command) for command in aac_and_plugin_commands.values()]
 
 
 @app.post("/command", status_code=HTTPStatus.OK, response_model=CommandResponseModel)
 def execute_aac_command(command_request: CommandRequestModel):
-    """Execute the command and return the result."""
+    """
+    Execute the command and return the result.
+
+    Args:
+        active_context (LanguageContext): The active language context.
+        command_request (CommandRequestModel): The AaC command to be executed.
+
+    Returns:
+        A CommandResponseModel object containing the result of the command execution.
+    """
     aac_commands_by_name = _get_rest_api_compatible_commands()
     aac_command = aac_commands_by_name.get(command_request.name)
 
@@ -396,7 +427,7 @@ def execute_aac_command(command_request: CommandRequestModel):
 
         try:
             result = aac_command.callback(*(arguments or []))
-            success = result.status_code == PluginExecutionStatusCode.SUCCESS
+            success = result.status_code == ExecutionStatus.SUCCESS
             result_message = f"{result.name}: {result.status_code.name.lower()}\n\n{result.get_messages_as_string()}"
         except Exception as error:
             success = False
@@ -410,15 +441,23 @@ def execute_aac_command(command_request: CommandRequestModel):
         )
 
 
-def _get_available_files_in_workspace(active_context: LanguageContext) -> set[AaCFile]:
-    """Get the available AaC files in the workspace sans files already in the context."""
-    aac_files_in_context = set(_get_files_in_context(active_context))
+def _get_available_files_in_workspace() -> set[AaCFile]:
+    """
+    Get the available AaC files in the workspace sans files already in the context.
+
+    Args:
+        active_context (LanguageContext): The active language context.
+
+    Returns:
+        A set containing available AaC files in workspace.
+    """
+    aac_files_in_context = set(_get_files_in_context())
     aac_files_in_workspace = set(find_aac_files(WORKSPACE_DIR))
 
     return aac_files_in_workspace.difference(aac_files_in_context)
 
 
-async def refresh_available_files_in_workspace(active_context: LanguageContext) -> None:
+async def refresh_available_files_in_workspace(context: LanguageContext) -> None:
     """
     Used to refresh the available files. Used in async since it takes too long for being used in request-response flow.
 
@@ -426,10 +465,12 @@ async def refresh_available_files_in_workspace(active_context: LanguageContext) 
         active_context (LanguageContext): The active Language Context.
     """
     global AVAILABLE_AAC_FILES
-    AVAILABLE_AAC_FILES = list(_get_available_files_in_workspace(active_context))
+    global active_context
+    active_context = context
+    AVAILABLE_AAC_FILES = list(_get_available_files_in_workspace())
 
     # Update the active context with any missing files
-    files_in_context = {file.uri for file in _get_files_in_context(active_context)}
+    files_in_context = {file.uri for file in _get_files_in_context()}
     available_files = {file.uri for file in AVAILABLE_AAC_FILES}
     missing_files = available_files.difference(files_in_context)
     try:
@@ -438,7 +479,9 @@ async def refresh_available_files_in_workspace(active_context: LanguageContext) 
         raise ParserError(error.source, error.errors) from None
     else:
         definitions_to_add = {definition.name: definition for definition_list in definition_lists_from_missing_files for definition in definition_list}
-        active_context.add_definitions_to_context(list(definitions_to_add.values()))
+        parser = DefinitionParser()
+        parser.load_definitions(active_context, list(definitions_to_add.values()))
+        # active_context.add_definitions_to_context(list(definitions_to_add.values()))
 
 
 def _report_error_response(code: HTTPStatus, error: str):
@@ -454,13 +497,18 @@ def _is_file_path_in_working_directory(file_path: str) -> bool:
 
 
 def _get_rest_api_compatible_commands() -> dict[str, AacCommand]:
-    """Filter out plugin commands that aren't compatible with the rest-api command. These commands are long-running commands that don't allow for a timely rest response."""
-    active_context = get_active_context()
+    """Filter out plugin commands that aren't compatible with the rest-api command. These commands are long-running commands that don't allow for a timely rest response.
+    Args:
+        active_context (LanguageContext): The active Language Context.
+
+    Returns:
+        A dictionary containing compatible commands, with the commands name as the key.
+    """
     long_running_commands = ["rest-api", "start-lsp-io", "start-lsp-tcp"]
     filtered_aac_and_plugin_commands = list(
         filter(
             lambda command: command.name not in long_running_commands,
-            active_context.get_plugin_commands(),
+            get_plugin_manager().get_plugins(),
         )
     )
 

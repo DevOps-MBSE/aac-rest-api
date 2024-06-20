@@ -3,8 +3,8 @@ from uuid import UUID
 from typing import Optional
 from pydantic import BaseModel
 
-from aac.io.files.aac_file import AaCFile
-from aac.lang.definitions.definition import Definition
+from aac.in_out.files.aac_file import AaCFile
+from aac.context.definition import Definition
 
 
 class DefinitionModel(BaseModel):
