@@ -73,7 +73,7 @@ def _start_restful_service(host: str, port: int) -> str:
     asyncio.run(refresh_available_files_in_workspace(LanguageContext()))
     logging.info(f"Starting REST API in {os.getcwd()}.")
     uvicorn.run(app, host=host, port=port)
-    return "Successfully started and stopped the RESTful API."
+    return "Successfully started the RESTful API."
 
 
 def gen_openapi_spec(output_directory: str) -> ExecutionResult:

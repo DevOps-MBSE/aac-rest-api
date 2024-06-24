@@ -81,9 +81,6 @@ def get_files_from_context():
     """
     Return a list of file model definitions of files contributing definitions.
 
-    Global Args:
-        ACTIVE_CONTEXT (LanguageContext):  The Global active language context.
-
     Returns:
         A list of FileModel objects representing files in the active context.
     """
@@ -112,9 +109,6 @@ def get_available_files(background_tasks: BackgroundTasks):
 def get_file_by_uri(uri: str):
     """
     Return the target file from the workspace
-
-    Global Args:
-        ACTIVE_CONTEXT (LanguageContext):  The global active language context.
 
     Args:
         uri (str): The string uri to search for.
@@ -226,8 +220,6 @@ def remove_file_by_uri(uri: str) -> None:
 
 
 # Definition CRUD Operations
-
-
 @app.get("/definitions", status_code=HTTPStatus.OK, response_model=list[DefinitionModel])
 def get_definitions() -> list[DefinitionModel]:
     """
@@ -418,9 +410,6 @@ def get_aac_commands() -> list[CommandModel]:
     """
     Return a list of all available plugin commands.
 
-    Global Args:
-        ACTIVE_CONTEXT (LanguageContext): The global active language context.
-
     Returns:
         A list of CommandModel objects
     """
@@ -432,9 +421,6 @@ def get_aac_commands() -> list[CommandModel]:
 def execute_aac_command(command_request: CommandRequestModel):
     """
     Execute the command and return the result.
-
-    Global Args:
-        ACTIVE_CONTEXT (LanguageContext): The global active language context.
 
     Args:
         command_request (CommandRequestModel): The AaC command to be executed.
@@ -469,9 +455,6 @@ def _get_available_files_in_workspace() -> set[AaCFile]:
     """
     Get the available AaC files in the workspace sans files already in the context.
 
-    Global Args:
-        ACTIVE_CONTEXT (LanguageContext): The global active language context.
-
     Returns:
         A set containing available AaC files in workspace.
     """
@@ -485,12 +468,13 @@ async def refresh_available_files_in_workspace(context: LanguageContext) -> None
     """
     Used to refresh the available files. Used in async since it takes too long for being used in request-response flow.
 
-    Global Args:
+    Args:
         context (LanguageContext): The given Language Context.
     """
     global AVAILABLE_AAC_FILES
     global ACTIVE_CONTEXT
 
+    ACTIVE_CONTEXT = context
     AVAILABLE_AAC_FILES = list(_get_available_files_in_workspace())
 
     # Update the active context with any missing files
@@ -505,10 +489,16 @@ async def refresh_available_files_in_workspace(context: LanguageContext) -> None
         definitions_to_add = {definition.name: definition for definition_list in definition_lists_from_missing_files for definition in definition_list}
         parser = DefinitionParser()
         parser.load_definitions(ACTIVE_CONTEXT, list(definitions_to_add.values()))
-        # ACTIVE_CONTEXT.add_definitions_to_context(list(definitions_to_add.values()))
 
 
 def _report_error_response(code: HTTPStatus, error: str):
+    """
+    Accepts an error string and raises an HTTPException error.
+
+    Args:
+        code (HTTPStatus): The HTTP Status code
+        error (str): An error message
+    """
     logging.error(error)
     raise HTTPException(
         status_code=code,
@@ -517,6 +507,15 @@ def _report_error_response(code: HTTPStatus, error: str):
 
 
 def _is_file_path_in_working_directory(file_path: str) -> bool:
+    """
+    Checks if the file path exists in the working directory.
+
+    Args:
+        file_path (str): Path to the file.
+
+    Returns:
+        A bool value of True if the file path exists in the working directory.
+    """
     return str(file_path).startswith(WORKSPACE_DIR)
 
 
