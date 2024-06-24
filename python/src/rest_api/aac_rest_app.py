@@ -164,9 +164,6 @@ def rename_file_uri(rename_request: FilePathRenameModel) -> None:
     Update a file's uri. (Rename file).
 
     Args:
-        ACTIVE_CONTEXT (LanguageContext):  The active global language context.
-
-    Args:
         rename_request (FilePathRenameModel): A RestAPI model for renaming a file.
     """
     current_file_path = sanitize_filesystem_path(str(rename_request.current_file_uri))
@@ -497,7 +494,10 @@ def _report_error_response(code: HTTPStatus, error: str):
 
     Args:
         code (HTTPStatus): The HTTP Status code
-        error (str): An error message
+        error (str): An error message\
+
+    Raises:
+        HTTPException.
     """
     logging.error(error)
     raise HTTPException(
