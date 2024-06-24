@@ -67,9 +67,6 @@ def _get_definitions_by_file_uri(file_uri: str) -> list[Definition]:
     """
     Return a subset of definitions that are sourced from the target file URI.
 
-    Global Args:
-        ACTIVE_CONTEXT (LanguageContext):  The global active language context.
-
     Args:
         file_uri (str): The source file URI to filter on.
 
