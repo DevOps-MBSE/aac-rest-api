@@ -8,7 +8,7 @@ from aac.context.definition_parser import DefinitionParser
 from aac.context.language_context import LanguageContext
 from aac.context.language_error import LanguageError
 from aac.context.definition import Definition
-from aac.execute.plugin_runner import AacCommand
+from aac.execute.plugin_runner import AacCommand, AacCommandArgument, PluginRunner
 from aac.execute.plugin_manager import get_plugin_manager
 from aac.in_out.files.aac_file import AaCFile
 from aac.in_out.files.find import find_aac_files, is_aac_file
@@ -29,7 +29,7 @@ app = FastAPI()
 
 # Global
 AVAILABLE_AAC_FILES: list[AaCFile] = []
-ACTIVE_CONTEXT: LanguageContext
+ACTIVE_CONTEXT = LanguageContext()
 WORKSPACE_DIR: str = os.getcwd()
 
 # File CRUD Operations
@@ -411,7 +411,7 @@ def get_aac_commands() -> list[CommandModel]:
         A list of CommandModel objects
     """
     aac_and_plugin_commands = _get_rest_api_compatible_commands()
-    return [to_command_model(command) for command in aac_and_plugin_commands.values()]
+    return [to_command_model(command) for command in aac_and_plugin_commands]
 
 
 @app.post("/command", status_code=HTTPStatus.OK, response_model=CommandResponseModel)
@@ -526,13 +526,37 @@ def _get_rest_api_compatible_commands() -> dict[str, AacCommand]:
     Returns:
         A dictionary containing compatible commands, with the commands name as the key.
     """
-    long_running_commands = ["rest-api", "start-lsp-io", "start-lsp-tcp"]
-    filtered_aac_and_plugin_commands = list(
-        filter(
-            lambda command: command.name not in long_running_commands,
-            get_plugin_manager().get_plugins(),
-        )
-    )
+    long_running_commands = ["rest_api", "start-lsp-io", "start-lsp-tcp"]
+    # p = get_plugin_manager().get_plugins()
+    # print("HEREHERHEHEHERHEHERHERHEHRERHERH")
+    # print(type(p))
+    # print(type(list(p)[0]))
+    # attrs = vars(list(p)[0])
+    # print(', '.join("%s: %s" % item for item in attrs.items()))
+    # print("ENDENDENDNENDNENDND")
+
+    result: list[AacCommand] = []
+    for runner in ACTIVE_CONTEXT.get_plugin_runners():
+        definition = runner.plugin_definition
+        for plugin_command in definition.instance.commands:
+            arguments: list[AacCommandArgument] = []
+            for input in plugin_command.input:
+                arguments.append(
+                    AacCommandArgument(
+                        input.name,
+                        input.description,
+                        ACTIVE_CONTEXT.get_python_type_from_primitive(input.type),
+                        input.default,
+                    )
+                )
+            result.append(
+                AacCommand(plugin_command.name,
+                plugin_command.help_text,
+                runner.command_to_callback[plugin_command.name],
+                arguments,
+                )
+            )
+    return result
 
     return {command.name: command for command in filtered_aac_and_plugin_commands}
 
