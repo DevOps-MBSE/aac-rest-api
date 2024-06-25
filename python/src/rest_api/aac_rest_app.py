@@ -411,7 +411,7 @@ def get_aac_commands() -> list[CommandModel]:
         A list of CommandModel objects
     """
     aac_and_plugin_commands = _get_rest_api_compatible_commands()
-    return [to_command_model(command) for command in aac_and_plugin_commands]
+    return [to_command_model(aac_and_plugin_commands[command]) for command in aac_and_plugin_commands]
 
 
 @app.post("/command", status_code=HTTPStatus.OK, response_model=CommandResponseModel)
@@ -526,14 +526,7 @@ def _get_rest_api_compatible_commands() -> dict[str, AacCommand]:
     Returns:
         A dictionary containing compatible commands, with the commands name as the key.
     """
-    long_running_commands = ["rest_api", "start-lsp-io", "start-lsp-tcp"]
-    # p = get_plugin_manager().get_plugins()
-    # print("HEREHERHEHEHERHEHERHERHEHRERHERH")
-    # print(type(p))
-    # print(type(list(p)[0]))
-    # attrs = vars(list(p)[0])
-    # print(', '.join("%s: %s" % item for item in attrs.items()))
-    # print("ENDENDENDNENDNENDND")
+    long_running_commands = ["rest-api", "start-lsp-io", "start-lsp-tcp"]
 
     result: list[AacCommand] = []
     for runner in ACTIVE_CONTEXT.get_plugin_runners():
@@ -556,9 +549,8 @@ def _get_rest_api_compatible_commands() -> dict[str, AacCommand]:
                 arguments,
                 )
             )
-    return result
 
-    return {command.name: command for command in filtered_aac_and_plugin_commands}
+    return {command.name: command for command in result}
 
 
 # Error Handlers
