@@ -28,7 +28,7 @@ from rest_api.aac_rest_app import app, refresh_available_files_in_workspace
 plugin_name = "REST API"
 
 
-def rest_api(host: str = "0.0.0.0", port: int = 8000) -> ExecutionResult:
+def rest_api(host: str, port: int) -> ExecutionResult:
     """
     Business logic for allowing rest-api command to perform Start a RESTful interface for interacting with and managing AaC.
 

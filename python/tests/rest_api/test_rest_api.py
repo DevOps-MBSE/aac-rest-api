@@ -1,5 +1,6 @@
 import json
 
+from tempfile import TemporaryDirectory
 from click.testing import CliRunner
 from typing import Tuple
 from unittest import TestCase
@@ -8,6 +9,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.testclient import TestClient
 from http import HTTPStatus
 
+from aac.in_out.parser._parser_error import ParserError
 from aac.execute.aac_execution_result import ExecutionStatus
 from aac.execute.command_line import cli, initialize_cli
 from aac.in_out.parser._parse_source import parse
@@ -30,11 +32,11 @@ class TestRestAPI(TestCase):
         print(response)
         self.assertEqual(HTTPStatus.OK, response.status_code)
 
-    def test_execute_validate_command(self):
+    def test_execute_check_command(self):
         command_name = "check"
-        test_model = parse(TEST_MODEL)
+        test_model = parse(TEST_MODEL)[0]
 
-        request_arguments = CommandRequestModel(name=command_name, arguments=[test_model[0].name, "False", "False"])
+        request_arguments = CommandRequestModel(name=command_name, arguments=[TEST_MODEL, "False", "False"])
         response = self.test_client.post("/command", data=json.dumps(jsonable_encoder(request_arguments)))
 
         self.assertEqual(HTTPStatus.OK, response.status_code)
@@ -43,9 +45,32 @@ class TestRestAPI(TestCase):
         self.assertIn(command_name, response.text)
         self.assertIn(test_model.name, response.text)
 
+    def test_execute_puml_component_command(self):
+        command_name = "gen-plugin"
+        test_model = parse(TEST_MODEL)[0]
+
+        with TemporaryDirectory() as temp_dir:
+            request_arguments = CommandRequestModel(name=command_name, arguments=[TEST_MODEL, temp_dir, temp_dir, temp_dir, "True", "True", "False"])
+            response = self.test_client.post("/command", data=json.dumps(jsonable_encoder(request_arguments)))
+
+            self.assertEqual(HTTPStatus.OK, response.status_code)
+            self.assertTrue(response.json().get("success"))
+            self.assertIn("success", response.text)
+            self.assertIn(command_name, response.text)
+
+    def test_execute_check_command_fails(self):
+        command_name = "check"
+        with self.assertRaises(Exception) as context:
+            request_arguments = CommandRequestModel(name=command_name, arguments=[BAD_TEST_MODEL, "False", "False"])
+            response = self.test_client.post("/command", data=json.dumps(jsonable_encoder(request_arguments)))
 
 TEST_MODEL = """
 model:
     name: TestModel
+    description: A TestModel
+"""
+
+BAD_TEST_MODEL = """
+model:
     description: A TestModel
 """

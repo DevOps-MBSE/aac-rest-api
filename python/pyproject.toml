@@ -51,6 +51,7 @@ test = [
 	"pyflakes >= 2.4",
 	"tox >= 3.24",
     "httpx >= 1.0.0"
+
 ]
 all = [
 	"aac >= 0.4.3",
