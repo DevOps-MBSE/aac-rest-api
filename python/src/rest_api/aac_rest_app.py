@@ -16,12 +16,7 @@ from aac.in_out.paths import sanitize_filesystem_path
 from aac.in_out.parser import parse, ParserError
 from aac.execute.aac_execution_result import ExecutionStatus
 
-from rest_api.models.command_model import (
-    CommandModel,
-    CommandRequestModel,
-    CommandResponseModel,
-    to_command_model,
-)
+from rest_api.models.command_model import (CommandModel, CommandRequestModel, CommandResponseModel, to_command_model)
 from rest_api.models.definition_model import DefinitionModel, to_definition_class, to_definition_model
 from rest_api.models.file_model import FileModel, FilePathModel, FilePathRenameModel, to_file_model
 
@@ -142,7 +137,6 @@ def import_files_to_context(file_models: list[FilePathModel]) -> None:
     files_to_import = set([str(model.uri) for model in file_models])
     valid_aac_files = set(filter(is_aac_file, files_to_import))
     invalid_files = files_to_import.difference(valid_aac_files)
-
     if len(invalid_files) > 0:
         _report_error_response(
             HTTPStatus.BAD_REQUEST,
@@ -155,6 +149,7 @@ def import_files_to_context(file_models: list[FilePathModel]) -> None:
             raise ParserError(error.source, error.errors) from None
         else:
             parser = DefinitionParser()
+
             list(map(parser.load_definitions(), ACTIVE_CONTEXT, new_file_definitions))
 
 
