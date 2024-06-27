@@ -24,7 +24,7 @@ app = FastAPI()
 
 # Global
 AVAILABLE_AAC_FILES: list[AaCFile] = []
-ACTIVE_CONTEXT = LanguageContext()
+global ACTIVE_CONTEXT
 WORKSPACE_DIR: str = os.getcwd()
 
 # File CRUD Operations
@@ -39,7 +39,10 @@ def _get_files_in_context() -> list[AaCFile]:
     Returns:
         A list of all files contributing definitions to the active context.
     """
-    return list({definition.source for definition in ACTIVE_CONTEXT.definitions})
+    if 'ACTIVE_CONTEXT' not in globals():
+        ACTIVE_CONTEXT = LanguageContext()
+
+    return list({definition.source for definition in ACTIVE_CONTEXT.get_definitions()})
 
 def _get_file_in_context_by_uri(uri: str) -> Optional[AaCFile]:
     """
@@ -54,6 +57,9 @@ def _get_file_in_context_by_uri(uri: str) -> Optional[AaCFile]:
     Returns:
         An optional AaCFile if it's present in the context, otherwise None.
     """
+    if 'ACTIVE_CONTEXT' not in globals():
+        ACTIVE_CONTEXT = LanguageContext()
+
     for definition in ACTIVE_CONTEXT.definitions:
         if definition.source.uri == uri:
             return definition.source
@@ -97,7 +103,7 @@ def get_available_files(background_tasks: BackgroundTasks):
     background_tasks.add_task(refresh_available_files_in_workspace)
 
     #  Having to use a cached response for now as the file-walking makes the response take too long.
-    return [to_file_model(file) for file in AVAILABLE_AAC_FILES]
+    return [to_file_model(file) for file in list(_get_available_files_in_workspace())]
 
 
 @app.get("/file", status_code=HTTPStatus.OK, response_model=FileModel)
@@ -134,6 +140,9 @@ def import_files_to_context(file_models: list[FilePathModel]) -> None:
     Args:
         file_models (list[FilePathModel]): List of file models for import.
     """
+    if 'ACTIVE_CONTEXT' not in globals():
+        ACTIVE_CONTEXT = LanguageContext()
+
     files_to_import = set([str(model.uri) for model in file_models])
     valid_aac_files = set(filter(is_aac_file, files_to_import))
     invalid_files = files_to_import.difference(valid_aac_files)
@@ -147,11 +156,10 @@ def import_files_to_context(file_models: list[FilePathModel]) -> None:
             new_file_definitions = [parse(file) for file in valid_aac_files]
         except ParserError as error:
             raise ParserError(error.source, error.errors) from None
-        else:
-            parser = DefinitionParser()
 
-            list(map(parser.load_definitions(), ACTIVE_CONTEXT, new_file_definitions))
-
+        parser = DefinitionParser()
+        for file in new_file_definitions:
+            parser.load_definitions(ACTIVE_CONTEXT, file)
 
 @app.put("/file", status_code=HTTPStatus.NO_CONTENT)
 def rename_file_uri(rename_request: FilePathRenameModel) -> None:
@@ -194,6 +202,9 @@ def remove_file_by_uri(uri: str) -> None:
         uri (str): uri (str): The string uri of the files to be removed.
     """
 
+    if 'ACTIVE_CONTEXT' not in globals():
+        ACTIVE_CONTEXT = LanguageContext()
+
     file_in_context = _get_file_in_context_by_uri(uri)
     if not file_in_context:
         _report_error_response(HTTPStatus.NOT_FOUND, f"File {uri} not found in the context.")
@@ -223,6 +234,10 @@ def get_definitions() -> list[DefinitionModel]:
     Returns:
         A list of definitions represented as DefinitionModel objects.
     """
+
+    if 'ACTIVE_CONTEXT' not in globals():
+        ACTIVE_CONTEXT = LanguageContext()
+
     definition_models = [to_definition_model(definition) for definition in ACTIVE_CONTEXT.get_definitions()]
     return definition_models
 
@@ -241,6 +256,10 @@ def get_definition_by_name(name: str) -> list[DefinitionModel]:
     Returns:
         Returns the definitions with the given name as a list containing DefinitionModel objects.
     """
+
+    if 'ACTIVE_CONTEXT' not in globals():
+        ACTIVE_CONTEXT = LanguageContext()
+
     definitions = ACTIVE_CONTEXT.get_definitions_by_name(name)
 
     if not definitions:
@@ -265,6 +284,10 @@ def add_definition(definition_model: DefinitionModel) -> None:
     Returns:
         204 HTTPStatus.NO_CONTENT if successful.
     """
+
+    if 'ACTIVE_CONTEXT' not in globals():
+        ACTIVE_CONTEXT = LanguageContext()
+
     definition_source_uri = sanitize_filesystem_path(definition_model.source_uri)
 
     if not _is_file_path_in_working_directory(definition_source_uri):
@@ -301,6 +324,8 @@ def update_definition(definition_model: DefinitionModel) -> None:
     Args:
         definition_model (DefinitionModel): The definition to be updated.
     """
+    if 'ACTIVE_CONTEXT' not in globals():
+        ACTIVE_CONTEXT = LanguageContext()
 
     definitions_to_update = ACTIVE_CONTEXT.get_definitions_by_name(definition_model.name)
 
@@ -329,9 +354,11 @@ def remove_definition_by_name(name: str) -> None:
         ACTIVE_CONTEXT (LanguageContext): The global active language context.
 
     Args:
-        ACTIVE_CONTEXT (LanguageContext): The active language context.
         name (str): Name of the definition to be removed.
     """
+
+    if 'ACTIVE_CONTEXT' not in globals():
+        ACTIVE_CONTEXT = LanguageContext()
 
     definitions_to_remove = ACTIVE_CONTEXT.get_definitions_by_name(name)
 
@@ -362,7 +389,9 @@ def get_root_key_schema(key: str) -> DefinitionModel:
         200 HTTPStatus.OK if successful.
         404 HTTPStatus.NOT_FOUND if the key doesn't exist.
     """
-    # root_definitions = ACTIVE_CONTEXT.get_root_definitions()
+    if 'ACTIVE_CONTEXT' not in globals():
+        ACTIVE_CONTEXT = LanguageContext()
+
     root_definitions = [definition for definition in ACTIVE_CONTEXT.definitions if definition.get_root()]
     matching_definitions = [definition for definition in root_definitions if definition.name == key]
 
@@ -391,6 +420,9 @@ def get_language_context_root_keys() -> list[str]:
         A list containing all root keys in the active context.
         200 HTTPStatus.OK
     """
+    if 'ACTIVE_CONTEXT' not in globals():
+        ACTIVE_CONTEXT = LanguageContext()
+
     return [str(definition.get_root()) for definition in ACTIVE_CONTEXT.definitions if definition.get_root()]
 
 
@@ -456,15 +488,13 @@ def _get_available_files_in_workspace() -> set[AaCFile]:
     return aac_files_in_workspace.difference(aac_files_in_context)
 
 
-async def refresh_available_files_in_workspace(context: LanguageContext) -> None:
+async def refresh_available_files_in_workspace(context: LanguageContext = LanguageContext()) -> None:
     """
     Used to refresh the available files. Used in async since it takes too long for being used in request-response flow.
 
     Args:
         context (LanguageContext): The given Language Context.
     """
-    global AVAILABLE_AAC_FILES
-    global ACTIVE_CONTEXT
 
     ACTIVE_CONTEXT = context
     AVAILABLE_AAC_FILES = list(_get_available_files_in_workspace())
@@ -473,14 +503,14 @@ async def refresh_available_files_in_workspace(context: LanguageContext) -> None
     files_in_context = {file.uri for file in _get_files_in_context()}
     available_files = {file.uri for file in AVAILABLE_AAC_FILES}
     missing_files = available_files.difference(files_in_context)
-    try:
-        definition_lists_from_missing_files = [parse(file_uri) for file_uri in missing_files]
-    except ParserError as error:
-        raise ParserError(error.source, error.errors) from None
-    else:
-        definitions_to_add = {definition.name: definition for definition_list in definition_lists_from_missing_files for definition in definition_list}
-        parser = DefinitionParser()
-        parser.load_definitions(ACTIVE_CONTEXT, list(definitions_to_add.values()))
+    # try:
+    #     definition_lists_from_missing_files = [parse(file_uri) for file_uri in missing_files]
+    # except ParserError as error:
+    #     raise ParserError(error.source, error.errors) from None
+    # else:
+    #     definitions_to_add = {definition.name: definition for definition_list in definition_lists_from_missing_files for definition in definition_list}
+    #     parser = DefinitionParser()
+    #     parser.load_definitions(ACTIVE_CONTEXT, list(definitions_to_add.values()))
 
 
 def _report_error_response(code: HTTPStatus, error: str):
@@ -518,9 +548,15 @@ def _get_rest_api_compatible_commands() -> dict[str, AacCommand]:
     """
     Filter out plugin commands that aren't compatible with the rest-api command. These commands are long-running commands that don't allow for a timely rest response.
 
+    Global Args:
+        ACTIVE_CONTEXT (LanguageContext): The global active language context.
+
     Returns:
         A dictionary containing compatible commands, with the commands name as the key.
     """
+    if 'ACTIVE_CONTEXT' not in globals():
+        ACTIVE_CONTEXT = LanguageContext()
+
     long_running_commands = ["rest-api", "start-lsp-io", "start-lsp-tcp"]
 
     result: list[AacCommand] = []
