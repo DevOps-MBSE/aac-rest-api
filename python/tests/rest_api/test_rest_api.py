@@ -109,7 +109,7 @@ class TestAacRestApiFiles(TestCase):
             new_file_name = "TestFile.aac"
             new_file_uri = os.path.join(temp_dir, new_file_name)
 
-            temp_file_path = os.path.join(temp_dir, old_file_name)
+            temp_file_path = os.path.abspath(os.path.join(temp_dir, old_file_name))
             temp_file = open(temp_file_path, "w")
             temp_file.writelines(TEST_MODEL)
             temp_file.close()
@@ -124,15 +124,43 @@ class TestAacRestApiFiles(TestCase):
             self.assertIn(new_file_uri, response.text)
             os.remove(new_file_uri)
 
+    def test_remove_file_from_context(self):
+        filepath = "tests/calc/model/calculator.yaml"
+        self.assertTrue(os.path.isfile(filepath))
+        file_model = [FilePathModel(uri=os.path.abspath(filepath))]
+        self.test_client.post("/files/import", data=json.dumps(jsonable_encoder(file_model)))
+
+        response = self.test_client.get("/files/context")
+        self.assertEqual(HTTPStatus.OK, response.status_code)
+        self.assertIn("calculator.yaml", response.text)
+
+        result = self.test_client.delete(f"/file?uri={os.path.abspath(filepath)}")
+        self.assertEqual(HTTPStatus.NO_CONTENT, result.status_code)
+
+        response = self.test_client.get("/files/context")
+        self.assertEqual(HTTPStatus.OK, response.status_code)
+        self.assertNotIn("calculator.yaml", response.text)
 
 
+class TestAacRestApiDefinitions(TestCase):
+    test_client = TestClient(app)
+
+    def test_get_definitions(self):
+        refresh_available_files_in_workspace()
+        filepath = "tests/calc/model/calculator.yaml"
+        self.maxDiff = None
+
+        model_path = os.path.abspath(filepath)
+        self.assertTrue(os.path.isfile(model_path))
+        definitions = parse(model_path)
+        definition_model = to_definition_model(definitions[0])
+
+        response = self.test_client.post("/definition", data=json.dumps(jsonable_encoder(definition_model)))
 
 
-# class TestAacRestApiDefinitionEndpoints(ActiveContextTestCase):
-#     test_client = TestClient(app)
-
-#     def test_get_definitions(self):
-#         self.maxDiff = None
+        print(response.text)
+        self.assertEqual(HTTPStatus.NO_CONTENT, response.status_code)
+        response = self.test_client.get("/definition")
 
 TEST_MODEL = """
 model:

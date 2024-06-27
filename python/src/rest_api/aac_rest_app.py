@@ -60,7 +60,7 @@ def _get_file_in_context_by_uri(uri: str) -> Optional[AaCFile]:
     if 'ACTIVE_CONTEXT' not in globals():
         ACTIVE_CONTEXT = LanguageContext()
 
-    for definition in ACTIVE_CONTEXT.definitions:
+    for definition in ACTIVE_CONTEXT.get_definitions():
         if definition.source.uri == uri:
             return definition.source
 
@@ -68,13 +68,19 @@ def _get_definitions_by_file_uri(file_uri: str) -> list[Definition]:
     """
     Return a subset of definitions that are sourced from the target file URI.
 
+    Global Args:
+        ACTIVE_CONTEXT (LanguageContext):  The global active language context.
+
     Args:
         file_uri (str): The source file URI to filter on.
 
     Returns:
         A list of definitions belonging to the target file.
     """
-    return [definition for definition in self.definitions if str(file_uri) == str(definition.source.uri)]
+    if 'ACTIVE_CONTEXT' not in globals():
+        ACTIVE_CONTEXT = LanguageContext()
+    definitions = ACTIVE_CONTEXT.get_definitions()
+    return [definition for definition in definitions if str(file_uri) == str(definition.source.uri)]
 
 
 @app.get("/files/context", status_code=HTTPStatus.OK, response_model=list[FileModel])
@@ -295,8 +301,9 @@ def add_definition(definition_model: DefinitionModel) -> None:
             HTTPStatus.BAD_REQUEST,
             f"Definition can't be added to a file {definition_source_uri} which is outside of the working directory: {WORKSPACE_DIR}.",
         )
-
-    definition_to_add = to_definition_class(definition_model)
+    definitions_to_add = []
+    for definition in definition_model:
+        definitions_to_add.append(to_definition_class(definition))
     existing_definitions = _get_definitions_by_file_uri(definition_source_uri)
 
     is_user_editable = True
@@ -310,7 +317,7 @@ def add_definition(definition_model: DefinitionModel) -> None:
         )
 
     parser = DefinitionParser()
-    parser.load_definitions(ACTIVE_CONTEXT, definition_to_add)
+    parser.load_definitions(ACTIVE_CONTEXT, definitions_to_add)
 
 
 @app.put("/definition", status_code=HTTPStatus.NO_CONTENT)
