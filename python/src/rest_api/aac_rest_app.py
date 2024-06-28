@@ -248,7 +248,7 @@ def get_definitions() -> list[DefinitionModel]:
     return definition_models
 
 
-@app.get("/definition", status_code=HTTPStatus.OK, response_model=DefinitionModel)
+@app.get("/definition", status_code=HTTPStatus.OK, response_model=list[DefinitionModel])
 def get_definition_by_name(name: str) -> list[DefinitionModel]:
     """
     Returns a definition from active context by name, or HTTPStatus.NOT_FOUND not found if the definition doesn't exist.
@@ -273,7 +273,7 @@ def get_definition_by_name(name: str) -> list[DefinitionModel]:
     else:
         definition_models = [to_definition_model(definition) for definition in definitions]
 
-        return definition_model
+        return definition_models
 
 
 @app.post("/definition", status_code=HTTPStatus.NO_CONTENT)
@@ -301,9 +301,7 @@ def add_definition(definition_model: DefinitionModel) -> None:
             HTTPStatus.BAD_REQUEST,
             f"Definition can't be added to a file {definition_source_uri} which is outside of the working directory: {WORKSPACE_DIR}.",
         )
-    definitions_to_add = []
-    for definition in definition_model:
-        definitions_to_add.append(to_definition_class(definition))
+    definition_to_add = to_definition_class(definition_model)
     existing_definitions = _get_definitions_by_file_uri(definition_source_uri)
 
     is_user_editable = True
@@ -315,6 +313,49 @@ def add_definition(definition_model: DefinitionModel) -> None:
             HTTPStatus.BAD_REQUEST,
             f"File {definition_source_uri} can't be edited by users.",
         )
+
+    parser = DefinitionParser()
+    parser.load_definitions(ACTIVE_CONTEXT, [definition_to_add])
+
+@app.post("/definitions", status_code=HTTPStatus.NO_CONTENT)
+def add_definitions(definition_models: list[DefinitionModel]) -> None:
+    """
+    Add the definitions to the active context. If the definition's source file doesn't exist, a new one will be created.
+
+    Global Args:
+        ACTIVE_CONTEXT (LanguageContext): The global active language context.
+
+    Args:
+        definition_models (list[DefinitionModel]): The list of definition models in request body.
+
+    Returns:
+        204 HTTPStatus.NO_CONTENT if successful.
+    """
+
+    if 'ACTIVE_CONTEXT' not in globals():
+        ACTIVE_CONTEXT = LanguageContext()
+
+    definitions_to_add = []
+    for definition_model in definition_models:
+        definition_source_uri = sanitize_filesystem_path(definition_model.source_uri)
+
+        if not _is_file_path_in_working_directory(definition_source_uri):
+            _report_error_response(
+                HTTPStatus.BAD_REQUEST,
+                f"Definition can't be added to a file {definition_source_uri} which is outside of the working directory: {WORKSPACE_DIR}.",
+            )
+        definitions_to_add.append(to_definition_class(definition_model))
+        existing_definitions = _get_definitions_by_file_uri(definition_source_uri)
+
+        is_user_editable = True
+        if len(existing_definitions) > 0:
+            is_user_editable = existing_definitions[0].source.is_user_editable
+
+        if not is_user_editable:
+            _report_error_response(
+                HTTPStatus.BAD_REQUEST,
+                f"File {definition_source_uri} can't be edited by users.",
+            )
 
     parser = DefinitionParser()
     parser.load_definitions(ACTIVE_CONTEXT, definitions_to_add)
@@ -370,7 +411,7 @@ def remove_definition_by_name(name: str) -> None:
     definitions_to_remove = ACTIVE_CONTEXT.get_definitions_by_name(name)
 
     if definitions_to_remove:
-        ACTIVE_CONTEXT.remove_definitions(definition_to_remove)
+        ACTIVE_CONTEXT.remove_definitions(definitions_to_remove)
     else:
         _report_error_response(
             HTTPStatus.NOT_FOUND,

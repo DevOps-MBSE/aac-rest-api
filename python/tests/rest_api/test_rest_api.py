@@ -13,6 +13,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.testclient import TestClient
 from http import HTTPStatus
 
+from aac.context.constants import DEFINITION_FIELD_NAME, ROOT_KEY_IMPORT
 from aac.context.language_context import LanguageContext
 from aac.in_out.files.aac_file import AaCFile
 from aac.in_out.parser._parser_error import ParserError
@@ -155,12 +156,66 @@ class TestAacRestApiDefinitions(TestCase):
         definitions = parse(model_path)
         definition_model = to_definition_model(definitions[0])
 
-        response = self.test_client.post("/definition", data=json.dumps(jsonable_encoder(definition_model)))
+        post_response = self.test_client.post("/definition", data=json.dumps(jsonable_encoder(definition_model)))
+        self.assertEqual(HTTPStatus.NO_CONTENT, post_response.status_code)
+
+        response = self.test_client.get("/definitions")
+        self.assertEqual(HTTPStatus.OK, response.status_code)
+        self.assertIn(filepath, response.text)
+
+    def test_get_definition_by_name(self):
+        refresh_available_files_in_workspace()
+        filepath = "tests/calc/model/calculator.yaml"
+
+        defs_to_lookup = ["Calculator", "Multiply", "MathLogger", "Add"]
+
+        model_path = os.path.abspath(filepath)
+        self.assertTrue(os.path.isfile(model_path))
+        definitions = parse(model_path)
+        definition_models = []
+        for definition in definitions:
+            definition_models.append(to_definition_model(definition))
+
+        post_response = self.test_client.post("/definitions", data=json.dumps(jsonable_encoder(definition_models)))
+        self.assertEqual(HTTPStatus.NO_CONTENT, post_response.status_code)
+
+        for definition_name in defs_to_lookup:
+            response = self.test_client.get(f"/definition?{DEFINITION_FIELD_NAME}={definition_name}")
+            self.assertEqual(HTTPStatus.OK, response.status_code)
+            self.assertIn(definition_name, response.text)
+
+    def test_get_definition_by_name_not_found(self):
+        fake_definition_name = "FakeModel"
+
+        response = self.test_client.get(f"/definition/{fake_definition_name}")
+        self.assertEqual(HTTPStatus.NOT_FOUND, response.status_code)
 
 
-        print(response.text)
-        self.assertEqual(HTTPStatus.NO_CONTENT, response.status_code)
-        response = self.test_client.get("/definition")
+    def test_remove_definition(self):
+        refresh_available_files_in_workspace()
+        filepath = "tests/calc/model/calculator.yaml"
+        definition_to_be_deleted = "MathLogger"
+
+        model_path = os.path.abspath(filepath)
+        self.assertTrue(os.path.isfile(model_path))
+        definitions = parse(model_path)
+        definition_models = []
+        for definition in definitions:
+            definition_models.append(to_definition_model(definition))
+
+        post_response = self.test_client.post("/definitions", data=json.dumps(jsonable_encoder(definition_models)))
+        self.assertEqual(HTTPStatus.NO_CONTENT, post_response.status_code)
+
+        get_response = self.test_client.get("/definitions")
+        self.assertEqual(HTTPStatus.OK, get_response.status_code)
+        self.assertIn("A log management service for calculator.", get_response.text)
+
+        response = self.test_client.delete(f"/definition?{DEFINITION_FIELD_NAME}={definition_to_be_deleted}")
+
+        get_response = self.test_client.get("/definitions")
+        self.assertEqual(HTTPStatus.OK, get_response.status_code)
+        self.assertNotIn("A log management service for calculator.", get_response.text)
+
 
 TEST_MODEL = """
 model:
