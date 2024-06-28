@@ -190,6 +190,27 @@ class TestAacRestApiDefinitions(TestCase):
         response = self.test_client.get(f"/definition/{fake_definition_name}")
         self.assertEqual(HTTPStatus.NOT_FOUND, response.status_code)
 
+    def test_update_definitions(self):
+        refresh_available_files_in_workspace()
+
+        parsed_definition = parse(TEST_MODEL)[0]
+        updated_parsed_definition = parse(UPDATED_TEST_MODEL)[0]
+
+        post_response = self.test_client.post("/definition", data=json.dumps(jsonable_encoder(to_definition_model(parsed_definition))))
+        self.assertEqual(HTTPStatus.NO_CONTENT, post_response.status_code)
+
+        get_response = self.test_client.get(f"/definition?{DEFINITION_FIELD_NAME}={parsed_definition.name}")
+        self.assertEqual(HTTPStatus.OK, get_response.status_code)
+        self.assertIn("A TestModel", get_response.text)
+        self.assertNotIn("An updated TestModel", get_response.text)
+
+        update_response = self.test_client.put("/definition", data=json.dumps(jsonable_encoder(to_definition_model(updated_parsed_definition))))
+        self.assertEqual(HTTPStatus.NO_CONTENT, update_response.status_code)
+
+        get_response = self.test_client.get(f"/definition?{DEFINITION_FIELD_NAME}={parsed_definition.name}")
+        self.assertEqual(HTTPStatus.OK, get_response.status_code)
+        self.assertIn("An updated TestModel", get_response.text)
+        self.assertNotIn("A TestModel", get_response.text)
 
     def test_remove_definition(self):
         refresh_available_files_in_workspace()
@@ -216,11 +237,44 @@ class TestAacRestApiDefinitions(TestCase):
         self.assertEqual(HTTPStatus.OK, get_response.status_code)
         self.assertNotIn("A log management service for calculator.", get_response.text)
 
+    def test_get_schema_definition(self):
+        get_response = self.test_client.get(f"/context/schema?key=model")
+        self.assertEqual(HTTPStatus.OK, get_response.status_code)
+        self.assertIn("Model", get_response.text)
+        self.assertIn("A definition that represents a system and/or component model.", get_response.text)
+
+    def test_get_root_keys(self):
+        refresh_available_files_in_workspace()
+        filepath = "tests/calc/model/calculator.yaml"
+        definition_to_be_deleted = "MathLogger"
+
+        model_path = os.path.abspath(filepath)
+        self.assertTrue(os.path.isfile(model_path))
+        definitions = parse(model_path)
+        definition_models = []
+        for definition in definitions:
+            definition_models.append(to_definition_model(definition))
+
+        post_response = self.test_client.post("/definitions", data=json.dumps(jsonable_encoder(definition_models)))
+        self.assertEqual(HTTPStatus.NO_CONTENT, post_response.status_code)
+
+        get_response = self.test_client.get("/context/root_keys")
+        self.assertEqual(HTTPStatus.OK, get_response.status_code)
+        self.assertIn("model", get_response.text)
+        self.assertIn("plugin", get_response.text)
+        self.assertIn("req", get_response.text)
+        self.assertIn("req_spec", get_response.text)
 
 TEST_MODEL = """
 model:
     name: TestModel
     description: A TestModel
+"""
+
+UPDATED_TEST_MODEL ="""
+model:
+    name: TestModel
+    description: An updated TestModel
 """
 
 BAD_TEST_MODEL = """

@@ -8,13 +8,12 @@ from aac.context.definition_parser import DefinitionParser
 from aac.context.language_context import LanguageContext
 from aac.context.language_error import LanguageError
 from aac.context.definition import Definition
-from aac.execute.plugin_runner import AacCommand, AacCommandArgument, PluginRunner
-from aac.execute.plugin_manager import get_plugin_manager
 from aac.in_out.files.aac_file import AaCFile
 from aac.in_out.files.find import find_aac_files, is_aac_file
 from aac.in_out.paths import sanitize_filesystem_path
 from aac.in_out.parser import parse, ParserError
 from aac.execute.aac_execution_result import ExecutionStatus
+from aac.execute.plugin_runner import AacCommand, AacCommandArgument
 
 from rest_api.models.command_model import (CommandModel, CommandRequestModel, CommandResponseModel, to_command_model)
 from rest_api.models.definition_model import DefinitionModel, to_definition_class, to_definition_model
@@ -27,8 +26,8 @@ AVAILABLE_AAC_FILES: list[AaCFile] = []
 global ACTIVE_CONTEXT
 WORKSPACE_DIR: str = os.getcwd()
 
-# File CRUD Operations
 
+# File CRUD Operations
 def _get_files_in_context() -> list[AaCFile]:
     """
     Returns a list of all files contributing definitions to the active context.
@@ -43,6 +42,7 @@ def _get_files_in_context() -> list[AaCFile]:
         ACTIVE_CONTEXT = LanguageContext()
 
     return list({definition.source for definition in ACTIVE_CONTEXT.get_definitions()})
+
 
 def _get_file_in_context_by_uri(uri: str) -> Optional[AaCFile]:
     """
@@ -63,6 +63,7 @@ def _get_file_in_context_by_uri(uri: str) -> Optional[AaCFile]:
     for definition in ACTIVE_CONTEXT.get_definitions():
         if definition.source.uri == uri:
             return definition.source
+
 
 def _get_definitions_by_file_uri(file_uri: str) -> list[Definition]:
     """
@@ -166,6 +167,7 @@ def import_files_to_context(file_models: list[FilePathModel]) -> None:
         parser = DefinitionParser()
         for file in new_file_definitions:
             parser.load_definitions(ACTIVE_CONTEXT, file)
+
 
 @app.put("/file", status_code=HTTPStatus.NO_CONTENT)
 def rename_file_uri(rename_request: FilePathRenameModel) -> None:
@@ -317,6 +319,7 @@ def add_definition(definition_model: DefinitionModel) -> None:
     parser = DefinitionParser()
     parser.load_definitions(ACTIVE_CONTEXT, [definition_to_add])
 
+
 @app.post("/definitions", status_code=HTTPStatus.NO_CONTENT)
 def add_definitions(definition_models: list[DefinitionModel]) -> None:
     """
@@ -384,7 +387,7 @@ def update_definition(definition_model: DefinitionModel) -> None:
                 updated_definition.uid = definition.uid
         ACTIVE_CONTEXT.remove_definitions(definitions_to_update)
         parser = DefinitionParser()
-        parser.load_definitions([updated_definition])
+        parser.load_definitions(ACTIVE_CONTEXT, [updated_definition])
 
     else:
         _report_error_response(
@@ -440,8 +443,8 @@ def get_root_key_schema(key: str) -> DefinitionModel:
     if 'ACTIVE_CONTEXT' not in globals():
         ACTIVE_CONTEXT = LanguageContext()
 
-    root_definitions = [definition for definition in ACTIVE_CONTEXT.definitions if definition.get_root()]
-    matching_definitions = [definition for definition in root_definitions if definition.name == key]
+    root_definitions = [definition for definition in ACTIVE_CONTEXT.get_definitions() if definition.get_root_key()]
+    matching_definitions = [definition for definition in root_definitions if definition.name == key.capitalize()]
 
     if not matching_definitions:
         _report_error_response(HTTPStatus.NOT_FOUND, f"No root key found called {key}.")
@@ -452,7 +455,6 @@ def get_root_key_schema(key: str) -> DefinitionModel:
             _report_error_response(HTTPStatus.NOT_FOUND, f"Unable to get the schema definition {schema_definition.name}.")
         else:
             schema_model = to_definition_model(schema_definition)
-            schema_model.yaml_schema = schema_definition.to_yaml
             return schema_model
 
 
@@ -471,7 +473,7 @@ def get_language_context_root_keys() -> list[str]:
     if 'ACTIVE_CONTEXT' not in globals():
         ACTIVE_CONTEXT = LanguageContext()
 
-    return [str(definition.get_root()) for definition in ACTIVE_CONTEXT.definitions if definition.get_root()]
+    return [str(definition.get_root_key()) for definition in ACTIVE_CONTEXT.definitions if definition.get_root_key()]
 
 
 # AaC Plugin Commands
@@ -536,7 +538,7 @@ def _get_available_files_in_workspace() -> set[AaCFile]:
     return aac_files_in_workspace.difference(aac_files_in_context)
 
 
-async def refresh_available_files_in_workspace(context: LanguageContext = LanguageContext()) -> None:
+async def refresh_available_files_in_workspace() -> None:
     """
     Used to refresh the available files. Used in async since it takes too long for being used in request-response flow.
 
@@ -544,21 +546,23 @@ async def refresh_available_files_in_workspace(context: LanguageContext = Langua
         context (LanguageContext): The given Language Context.
     """
 
-    ACTIVE_CONTEXT = context
+    if 'ACTIVE_CONTEXT' not in globals():
+        ACTIVE_CONTEXT = LanguageContext()
+
     AVAILABLE_AAC_FILES = list(_get_available_files_in_workspace())
 
     # Update the active context with any missing files
     files_in_context = {file.uri for file in _get_files_in_context()}
     available_files = {file.uri for file in AVAILABLE_AAC_FILES}
     missing_files = available_files.difference(files_in_context)
-    # try:
-    #     definition_lists_from_missing_files = [parse(file_uri) for file_uri in missing_files]
-    # except ParserError as error:
-    #     raise ParserError(error.source, error.errors) from None
-    # else:
-    #     definitions_to_add = {definition.name: definition for definition_list in definition_lists_from_missing_files for definition in definition_list}
-    #     parser = DefinitionParser()
-    #     parser.load_definitions(ACTIVE_CONTEXT, list(definitions_to_add.values()))
+    try:
+        definition_lists_from_missing_files = [parse(file_uri) for file_uri in missing_files]
+    except ParserError as error:
+        raise ParserError(error.source, error.errors) from None
+    else:
+        definitions_to_add = {definition.name: definition for definition_list in definition_lists_from_missing_files for definition in definition_list}
+        parser = DefinitionParser()
+        parser.load_definitions(ACTIVE_CONTEXT, list(definitions_to_add.values()))
 
 
 def _report_error_response(code: HTTPStatus, error: str):
@@ -611,23 +615,25 @@ def _get_rest_api_compatible_commands() -> dict[str, AacCommand]:
     for runner in ACTIVE_CONTEXT.get_plugin_runners():
         definition = runner.plugin_definition
         for plugin_command in definition.instance.commands:
-            arguments: list[AacCommandArgument] = []
-            for input in plugin_command.input:
-                arguments.append(
-                    AacCommandArgument(
-                        input.name,
-                        input.description,
-                        ACTIVE_CONTEXT.get_python_type_from_primitive(input.type),
-                        input.default,
+            if plugin_command not in long_running_commands:
+                arguments: list[AacCommandArgument] = []
+                for input in plugin_command.input:
+                    arguments.append(
+                        AacCommandArgument(
+                            input.name,
+                            input.description,
+                            ACTIVE_CONTEXT.get_python_type_from_primitive(input.type),
+                            input.default,
+                        )
+                    )
+                result.append(
+                    AacCommand(
+                        plugin_command.name,
+                        plugin_command.help_text,
+                        runner.command_to_callback[plugin_command.name],
+                        arguments,
                     )
                 )
-            result.append(
-                AacCommand(plugin_command.name,
-                plugin_command.help_text,
-                runner.command_to_callback[plugin_command.name],
-                arguments,
-                )
-            )
 
     return {command.name: command for command in result}
 
@@ -660,4 +666,3 @@ async def validation_exception_handler(request: Request, exc: exceptions.Request
         exc (RequestValidationError): The encountered RequestValidationError Exception.
     """
     _report_error_response(HTTPStatus.UNPROCESSABLE_ENTITY, str(exc))
-
