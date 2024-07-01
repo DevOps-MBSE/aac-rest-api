@@ -542,8 +542,8 @@ async def refresh_available_files_in_workspace() -> None:
     """
     Used to refresh the available files. Used in async since it takes too long for being used in request-response flow.
 
-    Args:
-        context (LanguageContext): The given Language Context.
+    Global Args:
+        ACTIVE_CONTEXT (LanguageContext): The active Language Context.
     """
 
     if 'ACTIVE_CONTEXT' not in globals():
