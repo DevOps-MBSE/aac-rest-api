@@ -234,7 +234,6 @@ class TestAacRestApiDefinitions(TestCase):
     def test_get_root_keys(self):
         refresh_available_files_in_workspace()
         filepath = "tests/calc/model/calculator.yaml"
-        definition_to_be_deleted = "MathLogger"
 
         model_path = os.path.abspath(filepath)
         self.assertTrue(os.path.isfile(model_path))
