@@ -1,35 +1,20 @@
 import json
 import os
 
-from aac.context.definition_parser import DefinitionParser
 from tempfile import TemporaryDirectory
-from unittest.mock import patch
-from click.testing import CliRunner
-from typing import Tuple
 from unittest import TestCase
-from pydantic import BaseModel, FilePath
 
 from fastapi.encoders import jsonable_encoder
 from fastapi.testclient import TestClient
 from http import HTTPStatus
 
-from aac.context.constants import DEFINITION_FIELD_NAME, ROOT_KEY_IMPORT
-from aac.context.language_context import LanguageContext
-from aac.in_out.files.aac_file import AaCFile
-from aac.in_out.parser._parser_error import ParserError
-from aac.execute.aac_execution_result import ExecutionStatus
-from aac.execute.command_line import cli, initialize_cli
+from aac.context.constants import DEFINITION_FIELD_NAME
 from aac.in_out.parser._parse_source import parse
-from rest_api.rest_api_impl import plugin_name, rest_api, gen_openapi_spec
-from rest_api.models.command_model import (
-    CommandModel,
-    CommandRequestModel,
-    CommandResponseModel,
-    to_command_model,
-)
-from rest_api.models.definition_model import DefinitionModel, to_definition_class, to_definition_model
-from rest_api.models.file_model import FileModel, FilePathModel, FilePathRenameModel, to_file_model
+from rest_api.models.command_model import CommandRequestModel
+from rest_api.models.definition_model import to_definition_model
+from rest_api.models.file_model import FilePathModel, FilePathRenameModel
 from rest_api.aac_rest_app import app, refresh_available_files_in_workspace
+
 
 class TestRestApiCommands(TestCase):
     test_client = TestClient(app)
@@ -50,7 +35,6 @@ class TestRestApiCommands(TestCase):
         self.assertIn("success", response.text)
         self.assertIn(command_name, response.text)
         self.assertIn(test_model.name, response.text)
-
 
     def test_execute_check_command_fails(self):
         command_name = "check"
@@ -213,14 +197,14 @@ class TestAacRestApiDefinitions(TestCase):
         self.assertEqual(HTTPStatus.OK, get_response.status_code)
         self.assertIn("A log management service for calculator.", get_response.text)
 
-        response = self.test_client.delete(f"/definition?{DEFINITION_FIELD_NAME}={definition_to_be_deleted}")
+        self.test_client.delete(f"/definition?{DEFINITION_FIELD_NAME}={definition_to_be_deleted}")
 
         get_response = self.test_client.get("/definitions")
         self.assertEqual(HTTPStatus.OK, get_response.status_code)
         self.assertNotIn("A log management service for calculator.", get_response.text)
 
     def test_get_schema_definition(self):
-        get_response = self.test_client.get(f"/context/schema?key=model")
+        get_response = self.test_client.get("/context/schema?key=model")
         self.assertEqual(HTTPStatus.OK, get_response.status_code)
         self.assertIn("Model", get_response.text)
         self.assertIn("A definition that represents a system and/or component model.", get_response.text)
@@ -253,7 +237,7 @@ model:
     description: A TestModel
 """
 
-UPDATED_TEST_MODEL ="""
+UPDATED_TEST_MODEL = """
 model:
     name: TestModel
     description: An updated TestModel
