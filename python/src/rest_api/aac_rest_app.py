@@ -515,7 +515,7 @@ def execute_aac_command(command_request: CommandRequestModel):
             result_message = f"{result.plugin_name}: {result.status_code.name.lower()}\n\n{result.get_messages_as_string()}"
         except Exception as error:
             success = False
-            result_message = f"{result.name}: failure\n\n{error}"
+            result_message = f"{result.plugin_name}: failure\n\n{error}"
         finally:
             return CommandResponseModel(command_name=aac_command.name, result_message=result_message, success=success)
     else:
