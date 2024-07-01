@@ -54,7 +54,7 @@ test = [
 ]
 
 all = [
-	"aac >= 0.4.3",
+	"aac >= 0.4.8",
 	"rest-api[doc]",
 	"rest-api[test]"
 ]

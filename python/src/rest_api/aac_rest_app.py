@@ -537,7 +537,6 @@ def _get_available_files_in_workspace() -> set[AaCFile]:
 
     return aac_files_in_workspace.difference(aac_files_in_context)
 
-
 async def refresh_available_files_in_workspace() -> None:
     """
     Used to refresh the available files. Used in async since it takes too long for being used in request-response flow.
