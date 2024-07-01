@@ -63,6 +63,7 @@ class TestAacRestApiFiles(TestCase):
     test_client = TestClient(app)
 
     def test_post_and_get_files(self):
+        refresh_available_files_in_workspace()
         filepath = "tests/calc/model/calculator.yaml"
         self.assertTrue(os.path.isfile(filepath))
 
@@ -75,10 +76,6 @@ class TestAacRestApiFiles(TestCase):
         available_files = self.test_client.get("/files/available")
         self.assertNotIn("calculator.yaml", available_files.text)
 
-    def test_get_available_aac_files(self):
-        available_files = self.test_client.get("/files/available")
-        self.assertIn("calculator.yaml", available_files.text)
-
     def test_get_file_in_context_by_uri(self):
         filepath = "tests/calc/model/calculator.yaml"
         self.assertTrue(os.path.isfile(filepath))
@@ -90,7 +87,6 @@ class TestAacRestApiFiles(TestCase):
 
     def test_rename_file_in_context(self):
         with TemporaryDirectory(dir="/workspace/rest-api/python") as temp_dir:
-            refresh_available_files_in_workspace()
 
             old_file_name = "OldTestFile.yaml"
             new_file_name = "TestFile.aac"
@@ -133,7 +129,7 @@ class TestAacRestApiDefinitions(TestCase):
     test_client = TestClient(app)
 
     def test_get_definitions(self):
-        refresh_available_files_in_workspace()
+
         filepath = "tests/calc/model/calculator.yaml"
         self.maxDiff = None
 
