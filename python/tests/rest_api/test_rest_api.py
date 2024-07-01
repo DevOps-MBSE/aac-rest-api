@@ -70,8 +70,7 @@ class TestAacRestApiFiles(TestCase):
         self.assertIn(filepath, response.text)
 
     def test_rename_file_in_context(self):
-        with TemporaryDirectory(dir="/workspace/rest-api/python") as temp_dir:
-
+        with TemporaryDirectory(dir=os.getcwd()) as temp_dir:
             old_file_name = "OldTestFile.yaml"
             new_file_name = "TestFile.aac"
             new_file_uri = os.path.join(temp_dir, new_file_name)
