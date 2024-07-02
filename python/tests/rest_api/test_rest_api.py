@@ -22,6 +22,12 @@ class TestRestApiCommands(TestCase):
     def test_get_available_commands(self):
         response = self.test_client.get("/commands")
         self.assertEqual(HTTPStatus.OK, response.status_code)
+        print(response.text)
+        self.assertIn("check", response.text)
+        self.assertIn("gen-plugin", response.text)
+        self.assertIn("gen-project", response.text)
+        self.assertIn("version", response.text)
+        self.assertIn("clean", response.text)
 
     def test_execute_check_command(self):
         command_name = "check"
