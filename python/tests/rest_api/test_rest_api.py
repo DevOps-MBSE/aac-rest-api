@@ -53,7 +53,7 @@ class TestAacRestApiFiles(TestCase):
     test_client = TestClient(app)
 
     def test_post_and_get_files(self):
-        refresh_available_files_in_workspace()
+
         filepath = "tests/calc/model/calculator.yaml"
         self.assertTrue(os.path.isfile(filepath))
 
