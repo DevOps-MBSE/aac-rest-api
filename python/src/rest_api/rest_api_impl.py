@@ -122,6 +122,7 @@ def _write_openapi_spec_to_file(output_directory: str) -> str:
                 routes=app.routes,
             ),
             output_file,
+            indent=4,
         )
 
     return f"Successfully wrote the OpenAPI spec to {full_file_path}."
