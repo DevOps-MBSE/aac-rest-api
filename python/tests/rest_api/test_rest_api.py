@@ -257,7 +257,7 @@ class TestGenOpenApiSpec(TestCase):
         output_message = std_out.strip().replace("\x1b[0m", "")
         return exit_code, output_message
 
-    def test_cli_gen_openapi_spec_success(self):
+    def test_cli_gen_openapi_spec(self):
         """Test the gen-openapi-spec CLI command success for the RestAPI Plugin."""
         with TemporaryDirectory() as temp_dir:
             args = [temp_dir]
