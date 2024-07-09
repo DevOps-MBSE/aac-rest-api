@@ -128,6 +128,6 @@ def _write_openapi_spec_to_file(output_directory: str) -> str:
 
         return f"Successfully wrote the OpenAPI spec to {full_file_path}."
     except TypeError:
-        return "Unable to convert the OpenAPI spec to JSON."
+        return f"Unable to convert the OpenAPI spec to JSON: {TypeError}"
 
 
