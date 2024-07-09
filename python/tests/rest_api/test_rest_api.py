@@ -1,6 +1,8 @@
 import json
 import os
 
+from click.testing import CliRunner
+from typing import Tuple
 from tempfile import TemporaryDirectory
 from unittest import TestCase
 
@@ -10,6 +12,7 @@ from http import HTTPStatus
 
 from aac.context.constants import DEFINITION_FIELD_NAME
 from aac.in_out.parser._parse_source import parse
+from aac.execute.command_line import cli, initialize_cli
 from rest_api.models.command_model import CommandRequestModel
 from rest_api.models.definition_model import to_definition_model
 from rest_api.models.file_model import FilePathModel, FilePathRenameModel
@@ -46,7 +49,7 @@ class TestRestApiCommands(TestCase):
         command_name = "check"
         with self.assertRaises(Exception) as context:
             request_arguments = CommandRequestModel(name=command_name, arguments=[BAD_TEST_MODEL, "False", "False"])
-            response = self.test_client.post("/command", data=json.dumps(jsonable_encoder(request_arguments)))
+            self.test_client.post("/command", data=json.dumps(jsonable_encoder(request_arguments)))
 
 
 class TestAacRestApiFiles(TestCase):
@@ -234,6 +237,49 @@ class TestAacRestApiDefinitions(TestCase):
         self.assertIn("plugin", get_response.text)
         self.assertIn("req", get_response.text)
         self.assertIn("req_spec", get_response.text)
+
+
+class TestGenOpenApiSpec(TestCase):
+
+    def test_gen_openapi_spec(self):
+        # Like in core going to rely on the CLI testing for this, have not determined what we would like to test here
+        pass
+
+    def run_gen_openapi_spec_cli_command_with_args(
+        self, args: list[str]
+    ) -> Tuple[int, str]:
+        """Utility function to invoke the CLI command with the given arguments."""
+        initialize_cli()
+        runner = CliRunner()
+        result = runner.invoke(cli, ["gen-openapi-spec"] + args)
+        exit_code = result.exit_code
+        std_out = str(result.stdout)
+        output_message = std_out.strip().replace("\x1b[0m", "")
+        return exit_code, output_message
+
+    def test_cli_gen_openapi_spec_success(self):
+        """Test the gen-openapi-spec CLI command success for the RestAPI Plugin."""
+        with TemporaryDirectory() as temp_dir:
+            args = [temp_dir]
+            exit_code, output_message = self.run_gen_openapi_spec_cli_command_with_args(args)
+
+            temp_dir_files = os.listdir(temp_dir)
+            self.assertNotEqual(0, len(temp_dir_files))
+
+    def test_cli_gen_openapi_spec_output(self):
+        with TemporaryDirectory() as temp_dir:
+            args = [temp_dir]
+            exit_code, output_message = self.run_gen_openapi_spec_cli_command_with_args(args)
+
+            temp_dir_files = os.listdir(temp_dir)
+            for temp_file in temp_dir_files:
+                self.assertTrue(temp_file.find("_OpenAPI_Schema.json"))
+                temp_file_content = open(os.path.join(temp_dir, temp_file), "r")
+                temp_content = temp_file_content.read()
+                self.assertIn("/files/context", temp_content)
+                self.assertIn("/files/available", temp_content)
+                self.assertIn("delete", temp_content)
+                self.assertIn("Get Definition By Name", temp_content)
 
 
 TEST_MODEL = """
