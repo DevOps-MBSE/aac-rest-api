@@ -125,7 +125,7 @@ def _write_openapi_spec_to_file(output_directory: str) -> [str, ExecutionStatus]
                 indent=4,
             )
 
-        msg = "Successfully wrote the OpenAPI spec to {full_file_path}."
+        msg = f"Successfully wrote the OpenAPI spec to {full_file_path}."
         status = ExecutionStatus.SUCCESS
     except TypeError:
         msg = f"Unable to convert the OpenAPI spec to JSON: {TypeError}"
