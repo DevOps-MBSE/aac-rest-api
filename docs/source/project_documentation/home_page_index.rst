@@ -2,7 +2,7 @@
 Architecture-as-Code (AaC)
 ==========================
 
-Get started now by reading the `User Guide Documentation <./project_documentation/user_guide/index.html>`_.
+Get started now by reading the `AaC User Guide Documentation <https://arch-as-code.org/project_documentation/user_guide/index.html>`_.
 
 
 `View it on GitHub <https://github.com/DevOps-MBSE/AaC>`_ and walk through the code base.
@@ -136,17 +136,16 @@ Architecture-as-Code (AaC) is |copy| 2021-present by AaC Project Contributors.
 
 License
 -------
-
-Arcitecture-as-Code is distributed by an `MIT license <https://github.com/DevOps-MBSE/AaC/blob/main/LICENSE>`_.
+Arcitecture-as-Code REST-API is distributed by an `MIT license <https://github.com/DevOps-MBSE/rest-api/blob/main/LICENSE>`_.
 
 Contributing
 ------------
 
-When contributing to this repository, please first discuss the change you wish to make via issue or discussion topic with the owners of this repository before making a change. Read more about becoming a contributor on `GitHub contributions <https://github.com/pmarsceill/just-the-docs#contributing>`_ and see our `current contribution status <https://github.com/jondavid-black/AaC#note-to-contributors>`_.
+When contributing to this repository, please first discuss the change you wish to make via issue or discussion topic with the owners of this repository before making a change. Read more about becoming a contributor on `GitHub contributions <https://github.com/pmarsceill/just-the-docs#contributing>`_ and see our `current contribution status <https://github.com/jondavid-black/rest-api#note-to-contributors>`_.
 
 *Thank you to the contributors of Architecture-as-Code!*
 
-.. contributors:: DevOps-MBSE/AaC
+.. contributors:: DevOps-MBSE/rest-api
     :avatars:
     :order: ASC
 
@@ -155,4 +154,4 @@ Code of Conduct
 
 Architecture-as-Code is committed to fostering a welcoming community.
 
-`View our Code of Conduct <https://github.com/DevOps-MBSE/AaC/blob/main/CODE_OF_CONDUCT.md>`_ on our GitHub repository.
+`View our Code of Conduct <https://github.com/DevOps-MBSE/rest-api/blob/main/CODE_OF_CONDUCT.md>`_ on our GitHub repository.
