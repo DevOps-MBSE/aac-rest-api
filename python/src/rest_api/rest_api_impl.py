@@ -109,6 +109,9 @@ def _write_openapi_spec_to_file(output_directory: str) -> [str, ExecutionStatus]
     Returns:
         A success message.
     """
+    if not os.path.exists(output_directory):
+        os.mkdir(output_directory)
+
     full_file_path = os.path.join(output_directory, "AaC_OpenAPI_Schema.json")
 
     try:
