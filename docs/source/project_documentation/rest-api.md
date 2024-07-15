@@ -187,6 +187,18 @@ This command executes the given AaC command.
 
 ## Gen-openapi-spec Command
 
+### Help command for gen-openapi-spec
+
+```bash
+$ aac gen-openapi-spec -h
+Usage: aac gen-openapi-spec [OPTIONS] OUTPUT_DIRECTORY
+
+Options:
+  -h, --help  Show this message and exit.
+```
+
+### Gen-openapi-spec usage and return
+
 The `gen-openapi-spec` command returns a JSON file containing the open API schema. Below is an example of a successful run of the command.
 
 ```bash
@@ -195,5 +207,7 @@ Successfully wrote the OpenAPI spec to ./output_directory/AaC_OpenAPI_Schema.jso
 ```
 
 Executing the above command will create a file in `./output_directory` called `AaC_OpenAPI_Schema.json`, which will contain the API schema in a JSON format.
+
+![Created File](../images/openapi.png)
 
 
