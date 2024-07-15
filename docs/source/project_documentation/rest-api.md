@@ -2,7 +2,8 @@
 
 The Rest-API plugin facilitates the use of the AaC application through a `RESTful API` interface. A `RESTful API` is an architectural style where an application interface sends and receives data through HTTP requests.
 
-## Help command for Rest-API
+## `rest-api` Command
+### Help Command for `rest-api`
 
 The section below is an example of the terminal output for the -h flag.
 
@@ -18,7 +19,6 @@ Options:
   -h, --help      Show this message and exit.
 ```
 
-## RESTful API
 ### Request Contents
 A request to the HTTP server contains a request method.
 The four request methods used by the interface are:
@@ -47,9 +47,9 @@ The four most common response statuses are:
 
 Message bodies will contain the data requested by a GET command in either a JSON or XML format.
 
-## Request Method Commands
+### Request Method Commands
 
-### Request Method Argument Types
+#### Request Method Argument Types
 
 Some request method commands require parameter arguments.  In order for arguments to be accepted by the RESTful API, they have to derive from a type called `BaseModel`.  Included in this plugin are several `BaseModel` derived types corresponding to objects used by the AaC Application.  When passing AaC objects as arguments, they must first be converted to one of the derived types.  Listed below are several AaC types and their corresponding `BaseModel` types, along with an included Python method to convert the two.
 
@@ -85,7 +85,7 @@ Other included BaseModel types that do not correspond to specific AaC types are:
     - A class for renaming a file, which contains a file uri to replace with the new file uri.
 
 
-### Available Request Method Commands
+#### Available Request Method Commands
 
 The requests available to be sent using the REST-API plugin are listed below.  These examples use the request method with the unique resource identifier as the first argument, followed by any other required arguments of the method.  The section under each command will contain the desired response status.
 
@@ -185,9 +185,9 @@ post("/command", command_request: CommandRequestModel)
 HTTPStatus: `OK`
 This command executes the given AaC command.
 
-## Gen-openapi-spec Command
+## `gen-openapi-spec` Command
 
-### Help command for gen-openapi-spec
+### Help Command for `gen-openapi-spec`
 
 ```bash
 $ aac gen-openapi-spec -h
@@ -197,7 +197,7 @@ Options:
   -h, --help  Show this message and exit.
 ```
 
-### Gen-openapi-spec usage and return
+### `gen-openapi-spec` Usage and Return
 
 The `gen-openapi-spec` command returns a JSON file containing the open API schema. Below is an example of a successful run of the command.
 
