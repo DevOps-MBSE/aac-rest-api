@@ -2,10 +2,10 @@
 Architecture-as-Code (AaC)
 ==========================
 
-Get started now by reading the `AaC User Guide Documentation <https://arch-as-code.org/project_documentation/user_guide/index.html>`_.
+Get started now by reading the AaC User Guide `Getting Started <./project_documentation/user_guide/index.html>`_ Documentation.
 
 
-`View it on GitHub <https://github.com/DevOps-MBSE/AaC>`_ and walk through the code base.
+`View AaC Core on GitHub <https://github.com/DevOps-MBSE/AaC>`_ and walk through the code base.
 
 What is Architecture-as-Code (AaC)?
 ===================================
@@ -123,7 +123,7 @@ built-in command to generate new plugins from an AaC plugin model.  Our own buil
 using this methodology, so you can see examples in the GitHub repo.
 
 We have intentionally reduced the number of built-in plugins and transitioned them to separate repositories.
-We want users to have more control over what AaC functionallity they utilize (i.e. opt-in) rather than
+We want users to have more control over what AaC functionality they utilize (i.e. opt-in) rather than
 put a bunch of stuff in the default installation that you may not want or need.  As we evolve AaC, you can look for
 our extensions in the `DevOps-MBSE GitHub Organization <https://github.com/orgs/DevOps-MBSE/repositories>`_.
 
@@ -132,18 +132,18 @@ About the project
 
 .. include:: <isonum.txt>
 
-Architecture-as-Code (AaC) is |copy| 2021-present by AaC Project Contributors.
+Architecture-as-Code (AaC) and its plugins are |copy| 2021-present by AaC Project Contributors.
 
 License
 -------
-Arcitecture-as-Code REST-API is distributed by an `MIT license <https://github.com/DevOps-MBSE/rest-api/blob/main/LICENSE>`_.
+Architecture-as-Code and its plugins are distributed by an `MIT license <https://github.com/DevOps-MBSE/rest-api?tab=MIT-1-ov-file>`_.
 
 Contributing
 ------------
 
-When contributing to this repository, please first discuss the change you wish to make via issue or discussion topic with the owners of this repository before making a change. Read more about becoming a contributor on `GitHub contributions <https://github.com/pmarsceill/just-the-docs#contributing>`_ and see our `current contribution status <https://github.com/jondavid-black/rest-api#note-to-contributors>`_.
+When contributing to this repository, please first discuss the change you wish to make via issue or discussion topic with the owners of this repository before making a change. Read more about becoming a contributor on `GitHub contributions <https://github.com/pmarsceill/just-the-docs#contributing>`_ and see our `current contribution status <https://github.com/DevOps-MBSE/rest-api?tab=coc-ov-file#note-to-contributors>`_.
 
-*Thank you to the contributors of Architecture-as-Code!*
+*Thank you to the contributors of Architecture-as-Code REST-API!*
 
 .. contributors:: DevOps-MBSE/rest-api
     :avatars:
@@ -152,6 +152,6 @@ When contributing to this repository, please first discuss the change you wish t
 Code of Conduct
 ---------------
 
-Architecture-as-Code is committed to fostering a welcoming community.
+The Architecture-as-Code team is committed to fostering a welcoming community.
 
-`View our Code of Conduct <https://github.com/DevOps-MBSE/rest-api/blob/main/CODE_OF_CONDUCT.md>`_ on our GitHub repository.
+`View our Code of Conduct <https://github.com/DevOps-MBSE/rest-api?tab=coc-ov-file>`_ on our GitHub repository.
