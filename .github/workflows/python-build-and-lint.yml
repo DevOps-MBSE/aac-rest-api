@@ -33,7 +33,7 @@ jobs:
       - name: Upload Python Wheel
         uses: actions/upload-artifact@v3
         with:
-          name: aac_rest_api
+          name: aac_rest_api_wheel
           path: python/dist
 
       - name: Build Documentation
