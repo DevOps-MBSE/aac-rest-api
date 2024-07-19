@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rest-api"
-version = "0.1.0"
+version = "0.1.1"
 authors = [
 	{ name="bunchw", email="asdfasdaf@email.com" },
 	{ name="lizzcondrey", email="asdfasdfd@mail.com" },
