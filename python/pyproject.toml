@@ -36,6 +36,7 @@ doc = [
     "sphinxcontrib-jsmath ~= 1.0.1",
     "sphinxcontrib-qthelp ~= 1.0.3",
     "sphinxcontrib-serializinghtml ~= 1.1.9",
+    "sphinx-simplepdf ~= 1.6.0",
 	"docutils ~= 0.19",
 	"furo >= 2024.1.29",
 	"myst-parser >= 2.0.0",
