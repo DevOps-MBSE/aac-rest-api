@@ -3,11 +3,10 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "rest-api"
-version = "0.1.4"
+name = "aac-rest-api"
+version = "0.1.5"
 authors = [
-	{ name="bunchw", email="asdfasdaf@email.com" },
-	{ name="lizzcondrey", email="asdfasdfd@mail.com" },
+	{ name="AaC Dev Team", email="asdfasdaf@email.com" },
 ]
 description = "Rest-API Plugin for AaC"
 requires-python = ">= 3.9.13"
@@ -22,7 +21,7 @@ classifiers = [
 ]
 
 dependencies = [
-	"aac >= 0.4.3",
+	"aac >= 0.4.27",
 ]
 [project.optional-dependencies]
 doc = [
@@ -55,16 +54,15 @@ test = [
 ]
 
 all = [
-	"aac >= 0.4.8",
-	"rest-api[doc]",
-	"rest-api[test]"
+	"aac-rest-api[doc]",
+	"aac-rest-api[test]"
 ]
 
 [project.entry-points."aac"]
 rest-api = "rest_api"
 [project.urls]
-Homepage = "https://github.com/DevOps-MBSE/rest-api"
-Issues = "https://github.com/DevOps-MBSE/rest-api/issues"
+Homepage = "https://github.com/DevOps-MBSE/aac-rest-api"
+Issues = "https://github.com/DevOps-MBSE/aac-rest-api/issues"
 
 [tool.setuptools]
 include-package-data = true
